@@ -1,4 +1,4 @@
-# root gitignore
+target/
 
 # for non jetbrains users
 .idea/
