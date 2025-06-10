@@ -235,6 +235,7 @@ name = "backend"
 version = "0.1.0"
 dependencies = [
  "futures",
+ "futures-util",
  "jni",
  "lazy_static",
  "libp2p",

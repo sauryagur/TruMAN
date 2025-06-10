@@ -5,42 +5,78 @@ use gossip::{Gossip, room::GossipRooms, MyBehaviourEvent, GossipEvent};
 use communication::{InteractionMessage};
 use libp2p::swarm::SwarmEvent;
 use std::sync::{Arc, Mutex};
-use std::thread;
-use futures::stream::StreamExt;
+use futures_util::stream::StreamExt; // Import the required traits
+use tokio::{select, runtime::Runtime};
 
 lazy_static::lazy_static! {
     static ref GOSSIP_INSTANCE: Arc<Mutex<Option<Gossip>>> = Arc::new(Mutex::new(None));
+    static ref RUNTIME: Mutex<Option<Runtime>> = Mutex::new(None);
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn init() {
-    let mut gossip = Gossip::new().unwrap();
-    gossip.join_room("public_test").unwrap();
-    gossip.open_ears().unwrap();
-    *GOSSIP_INSTANCE.lock().unwrap() = Some(gossip);
-
-    let gossip_clone = Arc::clone(&GOSSIP_INSTANCE);
-    thread::spawn(move || {
-        loop {
-            let mut guard = gossip_clone.lock().unwrap();
-            if let Some(ref mut gossip) = *guard {
-                if let event = gossip.swarm.select_next_some() {
-                    handle_event(&mut gossip, event);
-                }
-            }
+    let rt = match Runtime::new() {
+        Ok(runtime) => runtime,
+        Err(e) => {
+            println!("Failed to create runtime: {}", e);
+            return;
         }
+    };
+    *RUNTIME.lock().unwrap() = Some(rt);
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn init_gossip() {
+    let gossip = Gossip::new().unwrap();
+    *GOSSIP_INSTANCE.lock().unwrap() = Some(gossip);
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn start_gossip_loop() {
+    let runtime_guard = RUNTIME.lock().unwrap();
+    let Some(runtime) = runtime_guard.as_ref() else {
+        println!("Runtime not initialized");
+        return;
+    };
+
+    let handle = runtime.handle().clone();
+    std::mem::drop(runtime_guard); // Lock releasing
+
+    handle.spawn(async move {
+        let gossip = {
+            let mut guard = GOSSIP_INSTANCE.lock().unwrap();
+            guard.take()
+        };
+        let Some(mut gossip) = gossip else {
+            println!("Gossip instance not initialized");
+            return;
+        };
+
+        loop {
+            select! {
+                event = gossip.swarm.select_next_some() => handle_event(&mut gossip, event),
+            }
+        };
     });
 }
 
 #[unsafe(no_mangle)]
+pub extern "C" fn cleanup_runtime() {
+    *RUNTIME.lock().unwrap() = None;
+}
+
+#[unsafe(no_mangle)]
 pub extern "C" fn receive(line: &str) {
-    let mut guard = GOSSIP_INSTANCE.lock().unwrap();
-    let Some(ref mut gossip) = *guard else {
+    let gossip = {
+        let mut guard = GOSSIP_INSTANCE.lock().unwrap();
+        guard.take()
+    };
+    let Some(mut gossip) = gossip else {
         println!("Gossip instance not initialized");
         return;
     };
 
-    let data = parse_command(gossip, line);
+    let data = parse_command(&mut gossip, line);
     let Some(data) = data else {
         return;
     };

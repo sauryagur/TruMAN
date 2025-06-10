@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct Whitelist {
   pub peers: Vec<libp2p::PeerId>,
 }
