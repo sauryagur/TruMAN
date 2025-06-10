@@ -1,6 +1,6 @@
 # TruMAN
 
-TruMAN (Trustworthy Mesh Alert Network) is a **secure, decentralized, peer-to-peer communication platform** designed for disaster scenarios where traditional infrastructure (internet, cell towers) is unavailable. It runs across mobile devices and local networks, using a mesh architecture of "wolf" and "sheep" nodes to ensure message propagation even in fragmented areas.
+TruMAN (Trustless Mesh Area Network) is a **secure, decentralized, peer-to-peer communication platform** designed for disaster scenarios where traditional infrastructure (internet, cell towers) is unavailable. It runs across mobile devices and local networks, using a mesh architecture of "wolf" and "sheep" nodes to ensure message propagation even in fragmented areas.
 
 ---
 
@@ -12,48 +12,43 @@ TruMAN (Trustworthy Mesh Alert Network) is a **secure, decentralized, peer-to-pe
   - **Wolf nodes** relay messages across the mesh
   - **Sheep nodes** receive and forward messages selectively
 - 📲 **Expo React Native Frontend** for mobile interaction
-- 📁 **Shared Protobuf Schemas** for consistent cross-platform messaging
-- 🐳 Docker setup for reproducible dev/test environments
+- 🐳 **Docker** setup for reproducible dev/test environments
 
 ---
 
 ## 📁 Project Structure
 
 ```
-truman/
-├── backend/         # Rust-based P2P networking backend
-│   ├── src/
-│   ├── Cargo.toml
-│   └── ...
-├── mobile/          # Expo-based React Native frontend
-│   ├── App.js
+TruMan
+├── expo-app/              
+│   ├── App.tsx
 │   ├── package.json
-│   ├── components/
-│   ├── screens/
-│   └── ...
-├── shared/          # (Optional) Protobuf schemas and shared types
-│   └── protocol.proto
-├── docker/          # Containerized build and dev setup
-│   ├── docker-compose.yml
-│   ├── backend.Dockerfile
-│   └── mobile.Dockerfile
-├── .gitignore
-└── README.md
+│   ├── tsconfig.json
+│   ├── babel.config.js
+│   ├── android/           
+│   └── ios/
+├── backend/               
+│   ├── Cargo.toml
+│   └── src/lib.rs
+├── frontend/
+└── README.md
 ```
 
-## 🔨 Prerequisites
+## 🧰 Tech Stack
 
-- Rust
-- Node.js + Expo CLI
-- Docker (optional)
-- Protobuf Compiler (protoc)
-
+### 📦 Backend
+- **Language**: Rust
+- **Package Manager**: Cargo
+### 📱 Frontend
+- **Framework**: React Native (via [Expo](https://expo.dev/))
+- **Navigation**: React Navigation
+  
 ### 🧪 Running Locally
 
 ### 1. Clone the Repository
 ```bash
-git clone --recurse-submodules https://github.com/your-org/truman.git
-cd truman
+git clone https://github.com/your-org/truman.git
+cd TruMan
 ```
 
 ### 2. Build the Rust Backend
@@ -65,7 +60,7 @@ cargo run
 
 ### 3. Run the Mobile App (Expo)
 ```bash
-cd mobile
+cd frontend
 npm install
 npx expo start
 ```
