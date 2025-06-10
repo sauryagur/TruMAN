@@ -1,5 +1,6 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+#[unsafe(no_mangle)]
+pub extern "C" fn add(a: i32, b: i32) -> i32 {
+    a + b
 }
 
 #[cfg(test)]

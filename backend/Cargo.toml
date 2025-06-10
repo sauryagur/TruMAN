@@ -1,5 +1,6 @@
 [package]
 name = "backend"
+crate-type = ["cdylib", "staticlib"]
 version = "0.1.0"
 edition = "2024"
 
