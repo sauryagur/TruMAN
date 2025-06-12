@@ -54,11 +54,13 @@ const BottomNav: React.FC<BottomNavProps> = ({ navigation, userRole, activeScree
                 <TouchableOpacity
                     style={styles.navItem}
                     onPress={() => {
-                        if (userRole === 'wolf') {
-                            handleNavigation('AdminNewWolf');
-                        } else {
-                            handleNavigation('peers');
-                        }
+                        // if (userRole === 'wolf') {
+                        //     handleNavigation('peers');
+                        // } else {
+                        //     handleNavigation('peers');
+                        // }
+                        handleNavigation('peers');
+                        // Not actually correct to do it like this but workss!
                     }}
                 >
                     <Ionicons name="people" size={24} color={activeScreen === 'AdminNewWolf' || activeScreen === 'peers' ? accentColor : inactiveNavColor} />
