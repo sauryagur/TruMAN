@@ -34,7 +34,8 @@ const StatusCard: React.FC<StatusCardProps> = ({ icon, title, value, color, bord
     </TouchableOpacity>
 );
 
-const HomeScreen: React.FC<HomeScreenProps> = ({ userRole = 'sheep', navigation }) => {
+const HomeScreen: React.FC<HomeScreenProps> = ({ userRole = 'sheep', navigation}) => {
+    console.log("Rendring HomeScreen");
     const [networkStatus, setNetworkStatus] = useState('Connected');
     const [connectedPeers, setConnectedPeers] = useState(156);
     const [lastBroadcast, setLastBroadcast] = useState('5 minutes ago');
@@ -178,9 +179,10 @@ const styles = StyleSheet.create({
         marginLeft: 6,
     },
     content: {
-        flex: 1,
+        // flex: 1,
         paddingHorizontal: 20,
         gap: 20,
+        marginBottom:20
     },
     statusCard: {
         backgroundColor: '#2a2a3a',

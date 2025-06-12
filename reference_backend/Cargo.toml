@@ -1,0 +1,18 @@
+[package]
+name = "trumanBackend"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+libp2p = { version = "0.55.0", features = [
+    "tokio", "gossipsub", "mdns", "noise",
+    "macros", "tcp", "yamux", "quic", "serde"
+] }
+tokio = { version = "1.38", features = ["full"] }
+futures = "0.3.30"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+oqs = { version = "0.11.0", features = ["serde"] }
+serde = "1.0.219"
+serde_json = "1.0.140"
+rand = "0.9.1"
+aes-gcm = "0.10.3"

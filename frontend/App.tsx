@@ -62,7 +62,13 @@ export default function App() {
         ).start();
     }, [currentScreen]); // Rerun when currentScreen changes
 
-    const toggleUserRole = () => {
+// ...existing code...
+const toggleUserRole = () => {
+    // First change the role without any animation
+    setUserRole(prevRole => prevRole === 'sheep' ? 'wolf' : 'sheep');
+    
+    // If we're not already on home screen, navigate there with animation
+    if (currentScreen !== 'home') {
         Animated.timing(
             fadeAnim,
             {
@@ -71,11 +77,11 @@ export default function App() {
                 useNativeDriver: true,
             }
         ).start(() => {
-            setUserRole(prevRole => prevRole === 'sheep' ? 'wolf' : 'sheep');
-            setCurrentScreen('home'); // Reset to home when switching roles
+            setCurrentScreen('home');
         });
-    };
-
+    }
+};
+// ...existing code...
     const navigateToAdminPanel = () => {
         if (userRole === 'wolf' && currentScreen !== 'admin') { // Add check to prevent navigating to same screen
             Animated.timing(
@@ -92,6 +98,7 @@ export default function App() {
     };
 
     const navigateToHome = () => {
+      // console.log("navigated to home");
         if (currentScreen !== 'home') { // Add check to prevent navigating to same screen
             Animated.timing(
                 fadeAnim,
@@ -128,13 +135,13 @@ export default function App() {
 
             {/* Navigation buttons */}
             <View style={styles.navigationContainer}>
-                <TouchableOpacity
+                {/* <TouchableOpacity
                     style={[styles.navButton, currentScreen === 'home' && styles.activeNavButton]}
                     onPress={navigateToHome}
                 >
                     <Ionicons name="home" size={16} color="#ffffff"/>
                     <Text style={styles.navButtonText}>Dashboard</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
 
                 {userRole === 'wolf' && (
                     <TouchableOpacity
@@ -150,33 +157,33 @@ export default function App() {
     );
 
     const renderContent = () => {
-        switch (currentScreen) {
-            case 'home':
-                return <HomeScreen userRole={userRole} navigation={navigation}/>;
-            case 'admin':
-                // Only render AdminNewWolf if user is wolf, otherwise fall back to HomeScreen
-                return userRole === 'wolf' ? <AdminNewWolf navigation={navigation}/> :
-                    <HomeScreen userRole={userRole} navigation={navigation}/>;
-            case 'peers':
-                return <PeerScreen navigation={navigation}/>;
-            case 'messages':
-                // Placeholder for a Messages screen
-                return <MessagesScreen navigation={navigation}/>;
-            case 'wolfBroadcast':
-                // Placeholder for a Broadcast screen
-                return (
-                    <View style={styles.placeholderScreen}>
-                        <Text style={styles.placeholderText}>Broadcast Screen Coming Soon!</Text>
-                        <TouchableOpacity style={styles.backButtonPlaceholder} onPress={() => navigation.goBack()}>
-                            <Ionicons name="arrow-back" size={24} color="#ffffff"/>
-                            <Text style={styles.backButtonTextPlaceholder}>Go Back</Text>
-                        </TouchableOpacity>
-                    </View>
-                );
-            default:
-                return <HomeScreen userRole={userRole} navigation={navigation}/>;
-        }
-    };
+      console.log(currentScreen);
+    switch (currentScreen) {
+        case 'home':
+            return <HomeScreen userRole={userRole} navigation={navigation}/>;
+        case 'admin':
+            // Only render AdminNewWolf if user is wolf, otherwise fall back to HomeScreen
+            return userRole === 'wolf'
+                ? <AdminNewWolf navigation={navigation} userRole={userRole} />
+                : <HomeScreen userRole={userRole} navigation={navigation}/>;
+        case 'peers':
+            return <PeerScreen navigation={navigation} userRole={userRole} />;
+        case 'messages':
+            return <MessagesScreen navigation={navigation} userRole={userRole} />;
+        case 'wolfBroadcast':
+            return (
+                <View style={styles.placeholderScreen}>
+                    <Text style={styles.placeholderText}>Broadcast Screen Coming Soon!</Text>
+                    <TouchableOpacity style={styles.backButtonPlaceholder} onPress={() => navigation.goBack()}>
+                        <Ionicons name="arrow-back" size={24} color="#ffffff"/>
+                        <Text style={styles.backButtonTextPlaceholder}>Go Back</Text>
+                    </TouchableOpacity>
+                </View>
+            );
+        default:
+            return <HomeScreen userRole={userRole} navigation={navigation}/>;
+    }
+};
 
     return (
         <View style={styles.container}>
@@ -283,4 +290,4 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginLeft: 8,
     },
-});
+})
