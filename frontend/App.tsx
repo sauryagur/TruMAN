@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react'; // Import useRef and Animated
+import { Text, View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from './screens/HomeScreen';
 import AdminNewWolf from './screens/AdminNewWolf';
@@ -12,34 +12,97 @@ type ScreenName = 'home' | 'admin' | 'messages' | 'wolfBroadcast' | 'peers';
 export default function App() {
   const [userRole, setUserRole] = useState<UserRole>('sheep');
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('home'); // Use ScreenName type
+  const fadeAnim = useRef(new Animated.Value(1)).current; // Initial value for opacity: 1 (fully visible)
 
   // Navigation object to be passed down to child components
   const navigation = {
     navigate: (screen: ScreenName) => {
-      setCurrentScreen(screen);
+      if (screen === currentScreen) return; // Prevent navigating to the same screen
+
+      Animated.timing(
+          fadeAnim,
+          {
+            toValue: 0, // Fade out
+            duration: 200, // Short duration for fade out
+            useNativeDriver: true,
+          }
+      ).start(() => {
+        setCurrentScreen(screen); // Change screen after fade out
+      });
     },
     goBack: () => {
       // Simple goBack logic: navigates to 'home' from specific screens.
       // For a more complex app, you'd manage a navigation stack.
       if (currentScreen === 'admin' || currentScreen === 'peers' || currentScreen === 'messages' || currentScreen === 'wolfBroadcast') {
-        setCurrentScreen('home');
+        Animated.timing(
+            fadeAnim,
+            {
+              toValue: 0, // Fade out
+              duration: 200,
+              useNativeDriver: true,
+            }
+        ).start(() => {
+          setCurrentScreen('home');
+        });
       }
     },
   };
 
+  // Effect to fade in the new screen after `currentScreen` has updated
+  useEffect(() => {
+    fadeAnim.setValue(0); // Reset opacity to 0 immediately when screen changes
+    Animated.timing(
+        fadeAnim,
+        {
+          toValue: 1, // Fade in
+          duration: 300, // Longer duration for fade in
+          useNativeDriver: true,
+        }
+    ).start();
+  }, [currentScreen]); // Rerun when currentScreen changes
+
   const toggleUserRole = () => {
-    setUserRole(prevRole => prevRole === 'sheep' ? 'wolf' : 'sheep');
-    setCurrentScreen('home'); // Reset to home when switching roles
+    Animated.timing(
+        fadeAnim,
+        {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }
+    ).start(() => {
+      setUserRole(prevRole => prevRole === 'sheep' ? 'wolf' : 'sheep');
+      setCurrentScreen('home'); // Reset to home when switching roles
+    });
   };
 
   const navigateToAdminPanel = () => {
-    if (userRole === 'wolf') {
-      setCurrentScreen('admin');
+    if (userRole === 'wolf' && currentScreen !== 'admin') { // Add check to prevent navigating to same screen
+      Animated.timing(
+          fadeAnim,
+          {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }
+      ).start(() => {
+        setCurrentScreen('admin');
+      });
     }
   };
 
   const navigateToHome = () => {
-    setCurrentScreen('home');
+    if (currentScreen !== 'home') { // Add check to prevent navigating to same screen
+      Animated.timing(
+          fadeAnim,
+          {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }
+      ).start(() => {
+        setCurrentScreen('home');
+      });
+    }
   };
 
   const renderHeader = () => (
@@ -124,7 +187,9 @@ export default function App() {
   return (
       <View style={styles.container}>
         {renderHeader()}
-        {renderContent()}
+        <Animated.View style={[styles.contentContainer, { opacity: fadeAnim }]}>
+          {renderContent()}
+        </Animated.View>
       </View>
   );
 }
@@ -194,6 +259,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginLeft: 6,
+  },
+  contentContainer: { // New style for the Animated.View wrapper
+    flex: 1,
   },
   placeholderScreen: {
     flex: 1,

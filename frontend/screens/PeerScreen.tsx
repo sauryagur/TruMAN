@@ -188,7 +188,7 @@ const PeerScreen: React.FC<PeerScreenProps> = ({ navigation }) => {
 
                     <TouchableOpacity
                         style={styles.navItem}
-                        onPress={() => handleNavigation('AdminNewWolf')} // Highlight 'People' icon for this screen
+
                     >
                         <Ionicons name="people" size={24} color="#4A90E2" />
                     </TouchableOpacity>
