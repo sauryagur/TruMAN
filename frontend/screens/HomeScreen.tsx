@@ -8,19 +8,17 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
+import { ScrollView } from 'react-native';
 interface StatusCardProps {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   value: string;
   color: string;
 }
-
 interface HomeScreenProps {
   userRole?: 'sheep' | 'wolf';
   navigation?: any; // Add navigation prop
 }
-
 const StatusCard: React.FC<StatusCardProps> = ({ icon, title, value, color }) => (
   <TouchableOpacity style={styles.statusCard}>
     <View style={styles.cardHeader}>
@@ -30,28 +28,23 @@ const StatusCard: React.FC<StatusCardProps> = ({ icon, title, value, color }) =>
     <Text style={styles.cardValue}>{value}</Text>
   </TouchableOpacity>
 );
-
 const HomeScreen: React.FC<HomeScreenProps> = ({ userRole = 'sheep', navigation }) => {
   const [networkStatus, setNetworkStatus] = useState('Connected');
   const [connectedPeers, setConnectedPeers] = useState(156);
   const [lastBroadcast, setLastBroadcast] = useState('5 minutes ago');
   const [networkStrength, setNetworkStrength] = useState('250 kbps');
-
   useEffect(() => {
     // Simulate real-time updates
     const interval = setInterval(() => {
       setConnectedPeers(prev => prev + Math.floor(Math.random() * 5) - 2);
       setNetworkStrength(`${Math.floor(Math.random() * 500) + 100} kbps`);
     }, 10000);
-
     return () => clearInterval(interval);
   }, []);
-
   // Different capabilities based on user role
   const getEmergencyButtonText = () => {
     return userRole === 'wolf' ? 'Admin Emergency Broadcast' : 'Emergency Broadcast';
   };
-
   const getAdditionalInfo = () => {
     if (userRole === 'wolf') {
       return (
@@ -68,17 +61,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ userRole = 'sheep', navigation 
       </View>
     );
   };
-
   const handleNavigation = (screen: string) => {
     if (navigation) {
       navigation.navigate(screen);
     }
   };
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
-      
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <View style={styles.header}>
         <Text style={styles.title}>TruMAN</Text>
         <Text style={styles.subtitle}>
@@ -86,7 +77,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ userRole = 'sheep', navigation 
         </Text>
         {getAdditionalInfo()}
       </View>
-
       <View style={styles.content}>
         <StatusCard
           icon="wifi"
@@ -94,21 +84,18 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ userRole = 'sheep', navigation 
           value={networkStatus}
           color="#4A90E2"
         />
-
         <StatusCard
           icon="people"
           title="Connected Peers"
           value={`${connectedPeers} nodes`}
           color="#4A90E2"
         />
-
         <StatusCard
           icon="radio"
           title="Last Broadcast"
           value={lastBroadcast}
           color="#4A90E2"
         />
-
         <StatusCard
           icon="cellular"
           title="Network Strength"
@@ -134,7 +121,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ userRole = 'sheep', navigation 
           </View>
         )}
       </View>
-
+    </ScrollView>
       <View style={styles.footer}>
         <TouchableOpacity 
           style={[

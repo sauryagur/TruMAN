@@ -24,7 +24,7 @@ interface WolfItemProps {
 }
 
 interface AdminNewWolfProps {
-  navigation?: any; // Add navigation prop
+  navigation?: any; 
 }
 
 const WolfItem: React.FC<WolfItemProps> = ({ wolf, onPromote }) => (
@@ -58,7 +58,6 @@ const AdminNewWolf: React.FC<AdminNewWolfProps> = ({ navigation }) => {
   const [filteredWolves, setFilteredWolves] = useState<WolfNode[]>(wolves);
 
   useEffect(() => {
-    // Filter wolves based on search query
     const filtered = wolves.filter(wolf => 
       wolf.id.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -83,10 +82,9 @@ const AdminNewWolf: React.FC<AdminNewWolfProps> = ({ navigation }) => {
     Alert.alert(
       'Promote Wolf',
       `Are you sure you want to promote wolf ${wolfId}?`,
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
+      [{
+        text: 'Cancel',
+        style: 'cancel',
         },
         {
           text: 'Promote',
@@ -94,8 +92,7 @@ const AdminNewWolf: React.FC<AdminNewWolfProps> = ({ navigation }) => {
             setWolves(prevWolves => prevWolves.filter(wolf => wolf.id !== wolfId));
             Alert.alert('Success', `Wolf ${wolfId} has been promoted!`);
           },
-        },
-      ]
+        },]
     );
   };
 
@@ -127,7 +124,7 @@ const AdminNewWolf: React.FC<AdminNewWolfProps> = ({ navigation }) => {
           <Text style={styles.subtitle}>Assign a new wolf for yourself</Text>
         </View>
       </View>
-
+      <View style={{ flex: 1}}>
       <View style={styles.content}>
         <TextInput
           style={styles.searchInput}
@@ -146,7 +143,7 @@ const AdminNewWolf: React.FC<AdminNewWolfProps> = ({ navigation }) => {
           ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
         />
       </View>
-
+    </View>
       {/* Bottom Navigation */}
       <View style={styles.footer}>
         <View style={styles.bottomNav}>
@@ -231,6 +228,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingBottom: 20,
+    flexGrow: 1,
   },
   wolfCard: {
     backgroundColor: '#2a2a3a',
