@@ -9,30 +9,35 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScrollView } from 'react-native';
+
 interface StatusCardProps {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   value: string;
   color: string;
 }
+
 interface HomeScreenProps {
   userRole?: 'sheep' | 'wolf';
   navigation?: any; // Add navigation prop
 }
+
 const StatusCard: React.FC<StatusCardProps> = ({ icon, title, value, color }) => (
-  <TouchableOpacity style={styles.statusCard}>
-    <View style={styles.cardHeader}>
-      <Ionicons name={icon} size={20} color={color} />
-      <Text style={[styles.cardTitle, { color }]}>{title}</Text>
-    </View>
-    <Text style={styles.cardValue}>{value}</Text>
-  </TouchableOpacity>
+    <TouchableOpacity style={styles.statusCard}>
+      <View style={styles.cardHeader}>
+        <Ionicons name={icon} size={20} color={color} />
+        <Text style={[styles.cardTitle, { color }]}>{title}</Text>
+      </View>
+      <Text style={styles.cardValue}>{value}</Text>
+    </TouchableOpacity>
 );
+
 const HomeScreen: React.FC<HomeScreenProps> = ({ userRole = 'sheep', navigation }) => {
   const [networkStatus, setNetworkStatus] = useState('Connected');
   const [connectedPeers, setConnectedPeers] = useState(156);
   const [lastBroadcast, setLastBroadcast] = useState('5 minutes ago');
   const [networkStrength, setNetworkStrength] = useState('250 kbps');
+
   useEffect(() => {
     // Simulate real-time updates
     const interval = setInterval(() => {
@@ -41,133 +46,137 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ userRole = 'sheep', navigation 
     }, 10000);
     return () => clearInterval(interval);
   }, []);
+
   // Different capabilities based on user role
   const getEmergencyButtonText = () => {
     return userRole === 'wolf' ? 'Admin Emergency Broadcast' : 'Emergency Broadcast';
   };
+
   const getAdditionalInfo = () => {
     if (userRole === 'wolf') {
       return (
-        <View style={styles.adminInfo}>
-          <Ionicons name="shield-checkmark" size={16} color="#e74c3c" />
-          <Text style={styles.adminText}>Wolf Node - Administrative Access Enabled</Text>
-        </View>
+          <View style={styles.adminInfo}>
+            <Ionicons name="shield-checkmark" size={16} color="#e74c3c" />
+            <Text style={styles.adminText}>Wolf Node - Administrative Access Enabled</Text>
+          </View>
       );
     }
     return (
-      <View style={styles.adminInfo}>
-        <Ionicons name="people" size={16} color="#2ecc71" />
-        <Text style={styles.userText}>Sheep Node - Standard User Access</Text>
-      </View>
+        <View style={styles.adminInfo}>
+          <Ionicons name="people" size={16} color="#2ecc71" />
+          <Text style={styles.userText}>Sheep Node - Standard User Access</Text>
+        </View>
     );
   };
+
   const handleNavigation = (screen: string) => {
     if (navigation) {
       navigation.navigate(screen);
     }
   };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-      <View style={styles.header}>
-        <Text style={styles.title}>TruMAN</Text>
-        <Text style={styles.subtitle}>
-          A peer to peer emergency communication software
-        </Text>
-        {getAdditionalInfo()}
-      </View>
-      <View style={styles.content}>
-        <StatusCard
-          icon="wifi"
-          title="Network Status"
-          value={networkStatus}
-          color="#4A90E2"
-        />
-        <StatusCard
-          icon="people"
-          title="Connected Peers"
-          value={`${connectedPeers} nodes`}
-          color="#4A90E2"
-        />
-        <StatusCard
-          icon="radio"
-          title="Last Broadcast"
-          value={lastBroadcast}
-          color="#4A90E2"
-        />
-        <StatusCard
-          icon="cellular"
-          title="Network Strength"
-          value={networkStrength}
-          color="#4A90E2"
-        />
-
-        {/* Additional Wolf Node Features */}
-        {userRole === 'wolf' && (
-          <View style={styles.wolfFeatures}>
-            <StatusCard
-              icon="shield-checkmark"
-              title="Wolf Authority Level"
-              value="Administrative"
-              color="#e74c3c"
-            />
-            <StatusCard
-              icon="server"
-              title="Managed Nodes"
-              value="23 sheep nodes"
-              color="#e74c3c"
-            />
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          <View style={styles.header}>
+            <Text style={styles.title}>TruMAN</Text>
+            <Text style={styles.subtitle}>
+              A peer to peer emergency communication software
+            </Text>
+            {getAdditionalInfo()}
           </View>
-        )}
-      </View>
-    </ScrollView>
-      <View style={styles.footer}>
+          <View style={styles.content}>
+            <StatusCard
+                icon="wifi"
+                title="Network Status"
+                value={networkStatus}
+                color="#4A90E2"
+            />
+            <StatusCard
+                icon="people"
+                title="Connected Peers"
+                value={`${connectedPeers} nodes`}
+                color="#4A90E2"
+            />
+            <StatusCard
+                icon="radio"
+                title="Last Broadcast"
+                value={lastBroadcast}
+                color="#4A90E2"
+            />
+            <StatusCard
+                icon="cellular"
+                title="Network Strength"
+                value={networkStrength}
+                color="#4A90E2"
+            />
 
-        {/* Bottom Navigation */}
-        <View style={styles.bottomNav}>
-          <TouchableOpacity 
-            style={styles.navItem}
-            onPress={() => handleNavigation('Home')}
-          >
-            <Ionicons name="home" size={24} color="#4A90E2" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.navItem}
-            onPress={() => handleNavigation('Messages')}
-          >
-            <Ionicons name="chatbubble" size={24} color="#666" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.navItem}
-            onPress={() => {
-              if (userRole === 'wolf') {
-                handleNavigation('WolfBroadcast');
-              } else {
-                console.log('Broadcast feature');
-              }
-            }}
-          >
-            <Ionicons name="radio" size={24} color="#666" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.navItem}
-            onPress={() => {
-              if (userRole === 'wolf') {
-                handleNavigation('AdminNewWolf');
-              } else {
-                handleNavigation('Peers');
-              }
-            }}
-          >
-            <Ionicons name="people" size={24} color="#666" />
-          </TouchableOpacity>
+            {/* Additional Wolf Node Features */}
+            {userRole === 'wolf' && (
+                <View style={styles.wolfFeatures}>
+                  <StatusCard
+                      icon="shield-checkmark"
+                      title="Wolf Authority Level"
+                      value="Administrative"
+                      color="#e74c3c"
+                  />
+                  <StatusCard
+                      icon="server"
+                      title="Managed Nodes"
+                      value="23 sheep nodes"
+                      color="#e74c3c"
+                  />
+                </View>
+            )}
+          </View>
+        </ScrollView>
+        <View style={styles.footer}>
+          {/* Bottom Navigation */}
+          <View style={styles.bottomNav}>
+            <TouchableOpacity
+                style={styles.navItem}
+                onPress={() => handleNavigation('Home')}
+            >
+              <Ionicons name="home" size={24} color="#4A90E2" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                style={styles.navItem}
+                onPress={() => handleNavigation('Messages')}
+            >
+              <Ionicons name="chatbubble" size={24} color="#666" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                style={styles.navItem}
+                onPress={() => {
+                  if (userRole === 'wolf') {
+                    handleNavigation('WolfBroadcast');
+                  } else {
+                    console.log('Broadcast feature');
+                  }
+                }}
+            >
+              <Ionicons name="radio" size={24} color="#666" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                style={styles.navItem}
+                onPress={() => {
+                  if (userRole === 'wolf') {
+                    handleNavigation('AdminNewWolf');
+                  } else {
+                    // Changed from console.log to navigate to 'Peers'
+                    handleNavigation('peers');
+                  }
+                }}
+            >
+              <Ionicons name="people" size={24} color="#666" />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
   );
 };
 
