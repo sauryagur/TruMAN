@@ -123,22 +123,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ userRole = 'sheep', navigation 
       </View>
     </ScrollView>
       <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[
-            styles.emergencyButton,
-            userRole === 'wolf' && styles.wolfEmergencyButton
-          ]}
-          onPress={() => {
-            if (userRole === 'wolf') {
-              handleNavigation('WolfBroadcast');
-            } else {
-              console.log('Sheep emergency broadcast initiated');
-            }
-          }}
-        >
-          <Ionicons name="warning" size={24} color="#fff" />
-          <Text style={styles.emergencyText}>{getEmergencyButtonText()}</Text>
-        </TouchableOpacity>
 
         {/* Bottom Navigation */}
         <View style={styles.bottomNav}>
