@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import BottomNav from '../components/BottomNav'; // Import the new BottomNav component
 
 interface WolfNode {
   id: string;
@@ -24,28 +25,29 @@ interface WolfItemProps {
 }
 
 interface AdminNewWolfProps {
-  navigation?: any; 
+  navigation?: any;
+  userRole?: 'sheep' | 'wolf'; // Add userRole prop
 }
 
 const WolfItem: React.FC<WolfItemProps> = ({ wolf, onPromote }) => (
-  <View style={styles.wolfCard}>
-    <View style={styles.wolfInfo}>
-      <Text style={styles.wolfId}>{wolf.id}</Text>
-      <View style={styles.statusRow}>
-        <View style={styles.statusDot} />
-        <Text style={styles.responseTime}>Response Time: {wolf.responseTime} ms</Text>
+    <View style={styles.wolfCard}>
+      <View style={styles.wolfInfo}>
+        <Text style={styles.wolfId}>{wolf.id}</Text>
+        <View style={styles.statusRow}>
+          <View style={styles.statusDot} />
+          <Text style={styles.responseTime}>Response Time: {wolf.responseTime} ms</Text>
+        </View>
       </View>
+      <TouchableOpacity
+          style={styles.promoteButton}
+          onPress={() => onPromote(wolf.id)}
+      >
+        <Text style={styles.promoteText}>Promote</Text>
+      </TouchableOpacity>
     </View>
-    <TouchableOpacity 
-      style={styles.promoteButton}
-      onPress={() => onPromote(wolf.id)}
-    >
-      <Text style={styles.promoteText}>Promote</Text>
-    </TouchableOpacity>
-  </View>
 );
 
-const AdminNewWolf: React.FC<AdminNewWolfProps> = ({ navigation }) => {
+const AdminNewWolf: React.FC<AdminNewWolfProps> = ({ navigation, userRole = 'wolf' }) => { // Default to wolf for this screen
   const [searchQuery, setSearchQuery] = useState('');
   const [wolves, setWolves] = useState<WolfNode[]>([
     { id: '65513', responseTime: 250, isOnline: true },
@@ -57,9 +59,12 @@ const AdminNewWolf: React.FC<AdminNewWolfProps> = ({ navigation }) => {
 
   const [filteredWolves, setFilteredWolves] = useState<WolfNode[]>(wolves);
 
+  // Determine accent color for this screen (always red for wolf admin)
+  const accentColor = '#e74c3c';
+
   useEffect(() => {
-    const filtered = wolves.filter(wolf => 
-      wolf.id.toLowerCase().includes(searchQuery.toLowerCase())
+    const filtered = wolves.filter(wolf =>
+        wolf.id.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredWolves(filtered);
   }, [searchQuery, wolves]);
@@ -67,11 +72,11 @@ const AdminNewWolf: React.FC<AdminNewWolfProps> = ({ navigation }) => {
   useEffect(() => {
     // Simulate real-time response time updates
     const interval = setInterval(() => {
-      setWolves(prevWolves => 
-        prevWolves.map(wolf => ({
-          ...wolf,
-          responseTime: Math.floor(Math.random() * 800) + 50,
-        }))
+      setWolves(prevWolves =>
+          prevWolves.map(wolf => ({
+            ...wolf,
+            responseTime: Math.floor(Math.random() * 800) + 50,
+          }))
       );
     }, 5000);
 
@@ -80,103 +85,67 @@ const AdminNewWolf: React.FC<AdminNewWolfProps> = ({ navigation }) => {
 
   const handlePromote = (wolfId: string) => {
     Alert.alert(
-      'Promote Wolf',
-      `Are you sure you want to promote wolf ${wolfId}?`,
-      [{
-        text: 'Cancel',
-        style: 'cancel',
+        'Promote Wolf',
+        `Are you sure you want to promote wolf ${wolfId}?`,
+        [{
+          text: 'Cancel',
+          style: 'cancel',
         },
-        {
-          text: 'Promote',
-          onPress: () => {
-            setWolves(prevWolves => prevWolves.filter(wolf => wolf.id !== wolfId));
-            Alert.alert('Success', `Wolf ${wolfId} has been promoted!`);
-          },
-        },]
+          {
+            text: 'Promote',
+            onPress: () => {
+              setWolves(prevWolves => prevWolves.filter(wolf => wolf.id !== wolfId));
+              Alert.alert('Success', `Wolf ${wolfId} has been promoted!`);
+            },
+          },]
     );
   };
 
-  const handleNavigation = (screen: string) => {
-    if (navigation) {
-      navigation.navigate(screen);
-    }
-  };
-
   const renderWolfItem = ({ item }: { item: WolfNode }) => (
-    <WolfItem wolf={item} onPromote={handlePromote} />
+      <WolfItem wolf={item} onPromote={handlePromote} />
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
-      
-      {/* Header with Back Button */}
-      <View style={styles.headerContainer}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation?.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#4A90E2" />
-        </TouchableOpacity>
-        
-        <View style={styles.header}>
-          <Text style={styles.title}>New Wolf</Text>
-          <Text style={styles.subtitle}>Assign a new wolf for yourself</Text>
-        </View>
-      </View>
-      <View style={{ flex: 1}}>
-      <View style={styles.content}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search..."
-          placeholderTextColor="#888"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
 
-        <FlatList
-          data={filteredWolves}
-          renderItem={renderWolfItem}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContainer}
-          ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
-        />
-      </View>
-    </View>
-      {/* Bottom Navigation */}
-      <View style={styles.footer}>
-        <View style={styles.bottomNav}>
-          <TouchableOpacity 
-            style={styles.navItem}
-            onPress={() => handleNavigation('WolfHome')}
+        {/* Header with Back Button */}
+        <View style={styles.headerContainer}>
+          <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation?.goBack()}
           >
-            <Ionicons name="home" size={24} color="#666" />
+            <Ionicons name="arrow-back" size={24} color={accentColor} />
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.navItem}
-            onPress={() => handleNavigation('WolfMessages')}
-          >
-            <Ionicons name="chatbubble" size={24} color="#666" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.navItem}
-            onPress={() => handleNavigation('WolfBroadcast')}
-          >
-            <Ionicons name="radio" size={24} color="#666" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.navItem}
-            onPress={() => handleNavigation('AdminNewWolf')}
-          >
-            <Ionicons name="people" size={24} color="#4A90E2" />
-          </TouchableOpacity>
+
+          <View style={styles.header}>
+            <Text style={styles.title}>New Wolf</Text>
+            <Text style={styles.subtitle}>Assign a new wolf for yourself</Text>
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+        <View style={{ flex: 1}}>
+          <View style={styles.content}>
+            <TextInput
+                style={[styles.searchInput, { borderColor: accentColor }]}
+                placeholder="Search..."
+                placeholderTextColor="#888"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+            />
+
+            <FlatList
+                data={filteredWolves}
+                renderItem={renderWolfItem}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.listContainer}
+                ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
+            />
+          </View>
+        </View>
+        {/* Use the new BottomNav component */}
+        <BottomNav navigation={navigation} userRole={userRole} activeScreen="AdminNewWolf" />
+      </SafeAreaView>
   );
 };
 
@@ -223,7 +192,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#888',
     borderWidth: 1,
-    borderColor: '#4A90E2',
+    borderColor: '#4A90E2', // Default, will be overridden by inline style
     marginBottom: 32,
   },
   listContainer: {
@@ -235,7 +204,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#4A90E2',
+    borderColor: '#e74c3c', // Red tint for wolf cards
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -257,7 +226,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#2ecc71',
+    backgroundColor: '#2ecc71', // Green for online status
     marginRight: 8,
   },
   responseTime: {
@@ -265,7 +234,7 @@ const styles = StyleSheet.create({
     color: '#cccccc',
   },
   promoteButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#e74c3c', // Red tint for promote button
     borderRadius: 8,
     paddingHorizontal: 32,
     paddingVertical: 12,
@@ -275,11 +244,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  footer: {
+  footer: { // This style will be mostly handled by BottomNav component now
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
-  bottomNav: {
+  bottomNav: { // These styles are moved to BottomNav component
     flexDirection: 'row',
     backgroundColor: '#2a2a3a',
     borderRadius: 12,
@@ -288,7 +257,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#4A90E2',
   },
-  navItem: {
+  navItem: { // These styles are moved to BottomNav component
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,

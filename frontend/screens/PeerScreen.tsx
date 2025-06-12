@@ -11,6 +11,7 @@ import {
     Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import BottomNav from '../components/BottomNav'; // Import the new BottomNav component
 
 interface PeerNode {
     id: string;
@@ -25,6 +26,7 @@ interface PeerItemProps {
 
 interface PeerScreenProps {
     navigation?: any;
+    userRole?: 'sheep' | 'wolf'; // Add userRole prop
 }
 
 const PeerItem: React.FC<PeerItemProps> = ({ peer, onPing }) => (
@@ -45,7 +47,7 @@ const PeerItem: React.FC<PeerItemProps> = ({ peer, onPing }) => (
     </View>
 );
 
-const PeerScreen: React.FC<PeerScreenProps> = ({ navigation }) => {
+const PeerScreen: React.FC<PeerScreenProps> = ({ navigation, userRole = 'sheep' }) => { // Default to sheep for this screen
     const [searchQuery, setSearchQuery] = useState('');
     const [peers, setPeers] = useState<PeerNode[]>([
         { id: '65513', responseTime: 250, isOnline: true },
@@ -60,6 +62,9 @@ const PeerScreen: React.FC<PeerScreenProps> = ({ navigation }) => {
     const [filteredPeers, setFilteredPeers] = useState<PeerNode[]>(peers);
     const [totalPeers, setTotalPeers] = useState(156); // From image
     const [networkSpeed, setNetworkSpeed] = useState(250); // From image
+
+    // Determine accent color based on user role
+    const accentColor = userRole === 'wolf' ? '#e74c3c' : '#4A90E2'; // Red for wolf, blue for sheep
 
     useEffect(() => {
         const filtered = peers.filter(peer =>
@@ -102,12 +107,6 @@ const PeerScreen: React.FC<PeerScreenProps> = ({ navigation }) => {
         );
     };
 
-    const handleNavigation = (screen: string) => {
-        if (navigation) {
-            navigation.navigate(screen);
-        }
-    };
-
     const renderPeerItem = ({ item }: { item: PeerNode }) => (
         <PeerItem peer={item} onPing={handlePing} />
     );
@@ -123,7 +122,7 @@ const PeerScreen: React.FC<PeerScreenProps> = ({ navigation }) => {
             </View>
 
             {/* Network Overview */}
-            <View style={styles.networkOverviewCard}>
+            <View style={[styles.networkOverviewCard, { borderColor: accentColor }]}>
                 <Text style={styles.networkOverviewTitle}>Network Overview</Text>
                 <View style={styles.networkStats}>
                     <View style={styles.statItem}>
@@ -136,7 +135,7 @@ const PeerScreen: React.FC<PeerScreenProps> = ({ navigation }) => {
                     </View>
                 </View>
                 <TouchableOpacity
-                    style={styles.pingAllButton}
+                    style={[styles.pingAllButton, { backgroundColor: accentColor }]}
                     onPress={handlePingAllPeers}
                 >
                     <Text style={styles.pingAllText}>Ping all peers</Text>
@@ -145,7 +144,7 @@ const PeerScreen: React.FC<PeerScreenProps> = ({ navigation }) => {
 
             <View style={styles.content}>
                 <TextInput
-                    style={styles.searchInput}
+                    style={[styles.searchInput, { borderColor: accentColor }]}
                     placeholder="Search...."
                     placeholderTextColor="#888"
                     value={searchQuery}
@@ -162,38 +161,8 @@ const PeerScreen: React.FC<PeerScreenProps> = ({ navigation }) => {
                 />
             </View>
 
-            {/* Bottom Navigation */}
-            <View style={styles.footer}>
-                <View style={styles.bottomNav}>
-                    <TouchableOpacity
-                        style={styles.navItem}
-                        onPress={() => handleNavigation('Home')} // Assuming 'Home' is the main screen
-                    >
-                        <Ionicons name="home" size={24} color="#666" />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.navItem}
-                        onPress={() => handleNavigation('Messages')} // Assuming a Messages screen
-                    >
-                        <Ionicons name="chatbubble" size={24} color="#666" />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.navItem}
-                        onPress={() => handleNavigation('WolfBroadcast')} // Or a general 'Broadcast' screen
-                    >
-                        <Ionicons name="radio" size={24} color="#666" />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.navItem}
-
-                    >
-                        <Ionicons name="people" size={24} color="#4A90E2" />
-                    </TouchableOpacity>
-                </View>
-            </View>
+            {/* Use the new BottomNav component */}
+            <BottomNav navigation={navigation} userRole={userRole} activeScreen="peers" />
         </SafeAreaView>
     );
 };
@@ -227,7 +196,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         marginBottom: 20,
         borderWidth: 1,
-        borderColor: '#4A90E2',
+        borderColor: '#4A90E2', // Default, will be overridden by inline style
         alignItems: 'center',
     },
     networkOverviewTitle: {
@@ -255,7 +224,7 @@ const styles = StyleSheet.create({
         color: '#cccccc',
     },
     pingAllButton: {
-        backgroundColor: '#4A90E2',
+        backgroundColor: '#4A90E2', // Default, will be overridden by inline style
         borderRadius: 8,
         paddingHorizontal: 40,
         paddingVertical: 14,
@@ -276,7 +245,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#888',
         borderWidth: 1,
-        borderColor: '#4A90E2',
+        borderColor: '#4A90E2', // Default, will be overridden by inline style
         marginBottom: 20,
     },
     listContainer: {
@@ -288,7 +257,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: 20,
         borderWidth: 1,
-        borderColor: '#4A90E2',
+        borderColor: '#4A90E2', // Default, will be overridden by accentColor
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -317,7 +286,7 @@ const styles = StyleSheet.create({
         color: '#cccccc',
     },
     pingButton: {
-        backgroundColor: '#4A90E2',
+        backgroundColor: '#4A90E2', // Default, will be overridden by accentColor
         borderRadius: 8,
         paddingHorizontal: 32,
         paddingVertical: 12,
@@ -327,11 +296,11 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
     },
-    footer: {
+    footer: { // This style will be mostly handled by BottomNav component now
         paddingHorizontal: 20,
         paddingBottom: 20,
     },
-    bottomNav: {
+    bottomNav: { // These styles are moved to BottomNav component
         flexDirection: 'row',
         backgroundColor: '#2a2a3a',
         borderRadius: 12,
@@ -340,7 +309,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#4A90E2',
     },
-    navItem: {
+    navItem: { // These styles are moved to BottomNav component
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 8,

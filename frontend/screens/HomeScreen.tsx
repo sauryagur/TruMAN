@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -7,14 +7,16 @@ import {
     StatusBar,
     TouchableOpacity,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {ScrollView} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { ScrollView } from 'react-native';
+import BottomNav from '../components/BottomNav';
 
 interface StatusCardProps {
     icon: keyof typeof Ionicons.glyphMap;
     title: string;
     value: string;
     color: string;
+    borderColor?: string;
 }
 
 interface HomeScreenProps {
@@ -22,20 +24,25 @@ interface HomeScreenProps {
     navigation?: any; // Add navigation prop
 }
 
-const StatusCard: React.FC<StatusCardProps> = ({icon, title, value, color}) => (
-    <TouchableOpacity style={styles.statusCard}>
+const StatusCard: React.FC<StatusCardProps> = ({ icon, title, value, color, borderColor }) => (
+    <TouchableOpacity style={[styles.statusCard, { borderColor: borderColor || styles.statusCard.borderColor }]}>
         <View style={styles.cardHeader}>
-            <Ionicons name={icon} size={20} color={color}/>
-            <Text style={[styles.cardTitle, {color}]}>{title}</Text>
+            <Ionicons name={icon} size={20} color={color} />
+            <Text style={[styles.cardTitle, { color }]}>{title}</Text>
         </View>
         <Text style={styles.cardValue}>{value}</Text>
     </TouchableOpacity>
 );
-const HomeScreen: React.FC<HomeScreenProps> = ({userRole = 'sheep', navigation}) => {
+
+const HomeScreen: React.FC<HomeScreenProps> = ({ userRole = 'sheep', navigation }) => {
     const [networkStatus, setNetworkStatus] = useState('Connected');
     const [connectedPeers, setConnectedPeers] = useState(156);
     const [lastBroadcast, setLastBroadcast] = useState('5 minutes ago');
     const [networkStrength, setNetworkStrength] = useState('250 kbps');
+
+    // Determine accent color based on user role
+    const accentColor = userRole === 'wolf' ? '#e74c3c' : '#4A90E2'; // Red for wolf, blue for sheep
+
     useEffect(() => {
         // Simulate real-time updates
         const interval = setInterval(() => {
@@ -44,35 +51,28 @@ const HomeScreen: React.FC<HomeScreenProps> = ({userRole = 'sheep', navigation})
         }, 10000);
         return () => clearInterval(interval);
     }, []);
-    // Different capabilities based on user role
-    const getEmergencyButtonText = () => {
-        return userRole === 'wolf' ? 'Admin Emergency Broadcast' : 'Emergency Broadcast';
-    };
+
     const getAdditionalInfo = () => {
         if (userRole === 'wolf') {
             return (
                 <View style={styles.adminInfo}>
-                    <Ionicons name="shield-checkmark" size={16} color="#e74c3c"/>
+                    <Ionicons name="shield-checkmark" size={16} color="#e74c3c" />
                     <Text style={styles.adminText}>Wolf Node - Administrative Access Enabled</Text>
                 </View>
             );
         }
         return (
             <View style={styles.adminInfo}>
-                <Ionicons name="people" size={16} color="#2ecc71"/>
+                <Ionicons name="people" size={16} color="#2ecc71" />
                 <Text style={styles.userText}>Sheep Node - Standard User Access</Text>
             </View>
         );
     };
-    const handleNavigation = (screen: string) => {
-        if (navigation) {
-            navigation.navigate(screen);
-        }
-    };
+
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#1a1a1a"/>
-            <ScrollView contentContainerStyle={{flexGrow: 1}}>
+            <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+            <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
                 <View style={styles.header}>
                     <Text style={styles.title}>TruMAN</Text>
                     <Text style={styles.subtitle}>
@@ -85,25 +85,29 @@ const HomeScreen: React.FC<HomeScreenProps> = ({userRole = 'sheep', navigation})
                         icon="wifi"
                         title="Network Status"
                         value={networkStatus}
-                        color="#4A90E2"
+                        color={accentColor}
+                        borderColor={accentColor} // Pass accentColor for border
                     />
                     <StatusCard
                         icon="people"
                         title="Connected Peers"
                         value={`${connectedPeers} nodes`}
-                        color="#4A90E2"
+                        color={accentColor}
+                        borderColor={accentColor} // Pass accentColor for border
                     />
                     <StatusCard
                         icon="radio"
                         title="Last Broadcast"
                         value={lastBroadcast}
-                        color="#4A90E2"
+                        color={accentColor}
+                        borderColor={accentColor} // Pass accentColor for border
                     />
                     <StatusCard
                         icon="cellular"
                         title="Network Strength"
                         value={networkStrength}
-                        color="#4A90E2"
+                        color={accentColor}
+                        borderColor={accentColor} // Pass accentColor for border
                     />
 
                     {/* Additional Wolf Node Features */}
@@ -114,62 +118,21 @@ const HomeScreen: React.FC<HomeScreenProps> = ({userRole = 'sheep', navigation})
                                 title="Wolf Authority Level"
                                 value="Administrative"
                                 color="#e74c3c"
+                                borderColor="#e74c3c" // Always red for wolf features
                             />
                             <StatusCard
                                 icon="server"
                                 title="Managed Nodes"
                                 value="23 sheep nodes"
                                 color="#e74c3c"
+                                borderColor="#e74c3c" // Always red for wolf features
                             />
                         </View>
                     )}
                 </View>
             </ScrollView>
-            <View style={styles.footer}>
-
-                {/* Bottom Navigation */}
-                <View style={styles.bottomNav}>
-                    <TouchableOpacity
-                        style={styles.navItem}
-                        onPress={() => handleNavigation('Home')}
-                    >
-                        <Ionicons name="home" size={24} color="#4A90E2"/>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.navItem}
-                        onPress={() => handleNavigation('Messages')}
-                    >
-                        <Ionicons name="chatbubble" size={24} color="#666"/>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.navItem}
-                        onPress={() => {
-                            if (userRole === 'wolf') {
-                                handleNavigation('WolfBroadcast');
-                            } else {
-                                console.log('Broadcast feature');
-                            }
-                        }}
-                    >
-                        <Ionicons name="radio" size={24} color="#666"/>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.navItem}
-                        onPress={() => {
-                            if (userRole === 'wolf') {
-                                handleNavigation('AdminNewWolf');
-                            } else {
-                                handleNavigation('Peers');
-                            }
-                        }}
-                    >
-                        <Ionicons name="people" size={24} color="#666"/>
-                    </TouchableOpacity>
-                </View>
-            </View>
+            {/* Use the new BottomNav component */}
+            <BottomNav navigation={navigation} userRole={userRole} activeScreen="Home" />
         </SafeAreaView>
     );
 };
@@ -224,6 +187,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: 20,
         borderWidth: 1,
+        // The borderColor is now set dynamically via props, but we keep a default here
         borderColor: '#4A90E2',
         shadowColor: '#000',
         shadowOffset: {
@@ -253,35 +217,10 @@ const styles = StyleSheet.create({
     wolfFeatures: {
         gap: 20,
     },
+    // The footer and bottomNav styles are now managed within the BottomNav component
     footer: {
         paddingHorizontal: 20,
         paddingBottom: 20,
-    },
-    emergencyButton: {
-        backgroundColor: '#e74c3c',
-        borderRadius: 12,
-        padding: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 20,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    wolfEmergencyButton: {
-        backgroundColor: '#c0392b',
-    },
-    emergencyText: {
-        color: '#ffffff',
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginLeft: 10,
     },
     bottomNav: {
         flexDirection: 'row',
