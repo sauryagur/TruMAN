@@ -6,7 +6,7 @@ use libp2p::mdns::Event::{Discovered, Expired};
 use libp2p::swarm::SwarmEvent;
 use libp2p::{PeerId, gossipsub::IdentTopic};
 
-use crate::communication::InteractionMessage;
+use crate::communication::{GetDataViaMessageError, InteractionMessage};
 
 use super::events::EventHandler;
 use super::message::MessageData;
@@ -112,11 +112,16 @@ impl EventHandler for Gossip {
             message: content.to_string(),
             room: self.get_room_from_hash(message.topic),
         };
-        let Ok(interaction) = InteractionMessage::from_msg(self.peer_id(), &msg_data) else {
-            println!("Error parsing message: {:?}", msg_data);
-            return None;
-        };
-        return Some(GossipEvent::Message((msg_data, interaction)));
+        match InteractionMessage::from_msg(&self.whitelist, &msg_data) {
+            Ok(interaction) => Some(GossipEvent::Message((msg_data, interaction))),
+            Err(e) => {
+                if let GetDataViaMessageError::Unauthorized = e {
+                    // This peer is doing shit they shouldn't be able to do via the UI, so they are manipulating the system
+                    let _ = self.swarm.disconnect_peer_id(msg_data.peer);
+                }
+                None
+            }
+        }
     }
     fn handle(&mut self, event: SwarmEvent<MyBehaviourEvent>) -> Option<GossipEvent> {
         match event {

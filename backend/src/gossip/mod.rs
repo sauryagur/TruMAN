@@ -80,10 +80,11 @@ impl Display for GossipEvent {
 }
 
 impl Gossip {
-    pub fn new() -> Result<Self, Box<dyn Error>> {
+    pub fn new(whitelist: &Vec<String>) -> Result<Self, Box<dyn Error>> {
         let _ = tracing_subscriber::fmt()
             .with_env_filter(EnvFilter::from_default_env())
             .try_init();
+
 
         let swarm = libp2p::SwarmBuilder::with_new_identity()
             .with_tokio()
@@ -122,12 +123,11 @@ impl Gossip {
                 Ok(MyBehaviour { gossipsub, mdns })
             })?
             .build();
-
         Ok(Self {
             swarm,
             topics: Vec::new(),
             peer_ids: HashSet::new(),
-            whitelist: Whitelist::new(),
+            whitelist: whitelist.into(),
         })
     }
     pub fn peer_id(&self) -> PeerId {

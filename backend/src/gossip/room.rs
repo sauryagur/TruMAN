@@ -1,6 +1,5 @@
 use libp2p::{
-    PeerId,
-    gossipsub::{self, IdentTopic},
+    gossipsub::{self, IdentTopic}, PeerId,
 };
 use std::{error::Error, fmt::Display};
 
