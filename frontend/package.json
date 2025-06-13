@@ -16,7 +16,8 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.3",
-    "react-native-web": "^0.20.0"
+    "react-native-web": "^0.20.0",
+    "expo-sqlite": "~15.2.12"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

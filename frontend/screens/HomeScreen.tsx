@@ -40,6 +40,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ userRole = 'sheep', navigation}
     const [connectedPeers, setConnectedPeers] = useState(156);
     const [lastBroadcast, setLastBroadcast] = useState('5 minutes ago');
     const [networkStrength, setNetworkStrength] = useState('250 kbps');
+    const [publicKey, setPublicKey] = useState('')
 
     // Determine accent color based on user role
     const accentColor = userRole === 'wolf' ? '#e74c3c' : '#4A90E2'; // Red for wolf, blue for sheep
@@ -82,6 +83,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ userRole = 'sheep', navigation}
                     {getAdditionalInfo()}
                 </View>
                 <View style={styles.content}>
+                    {userRole == 'wolf' && (<StatusCard
+                        icon="key"
+                        title="Public Key"
+                        value={publicKey}
+                        color={accentColor}
+                        borderColor={accentColor} // Pass accentColor for border
+                    />)}
                     <StatusCard
                         icon="wifi"
                         title="Network Status"
