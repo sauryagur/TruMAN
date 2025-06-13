@@ -1,10 +1,12 @@
+use serde::{Deserialize, Serialize};
+
 use super::{
     GenerateRoomName, Gossip,
     room::{GossipRooms, Room},
 };
 use crate::communication::InteractionMessage;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MessageData {
     pub peer: libp2p::PeerId,
     pub message: String,

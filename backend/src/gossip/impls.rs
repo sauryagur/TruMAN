@@ -10,7 +10,7 @@ use crate::communication::{GetDataViaMessageError, InteractionMessage};
 
 use super::events::EventHandler;
 use super::message::MessageData;
-use super::nonce::Nonce;
+// use super::nonce::Nonce;
 use super::room::{GossipRooms, Room};
 use super::{Gossip, GossipEvent, MyBehaviourEvent};
 
@@ -105,7 +105,7 @@ impl EventHandler for Gossip {
             // probably someone asking the OP something, we don't care
             return None;
         }
-        let data = Nonce::remove_nonce(&message.data);
+        let data = message.data;//Nonce::remove_nonce(&message.data);
         let content = String::from_utf8_lossy(&data);
         let msg_data = MessageData {
             peer: peer_id,

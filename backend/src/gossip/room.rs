@@ -1,9 +1,10 @@
 use libp2p::{
     gossipsub::{self, IdentTopic}, PeerId,
 };
+use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt::Display};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Room {
     PublicRoom(String),
     DirectMessage(String),
@@ -38,9 +39,11 @@ impl Room {
 }
 
 pub trait GossipRooms {
+    #[allow(unused)]
     fn get_peer_from_room_name(&self, room_name: &str) -> Option<&PeerId>;
     fn get_topic_from_name(&self, topic_self: &str) -> Option<IdentTopic>;
     fn join_room(&mut self, topic_str: &str) -> Result<(), Box<dyn Error>>;
+    #[allow(unused)]
     fn leave_room(&mut self, topic_str: &str) -> Result<(), Box<dyn Error>>;
     fn get_room_from_hash(&self, topic: gossipsub::TopicHash) -> Room;
     fn get_room_from_name(&self, topic: String) -> Room;

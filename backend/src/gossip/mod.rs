@@ -3,6 +3,7 @@ use libp2p::{
     swarm::{NetworkBehaviour, SwarmEvent},
     tcp, yamux,
 };
+use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashSet, hash_map::DefaultHasher},
     error::Error,
@@ -18,7 +19,7 @@ use crate::communication::InteractionMessage;
 pub mod events;
 pub mod impls;
 pub mod message;
-pub mod nonce;
+// pub mod nonce;
 pub mod room;
 pub mod whitelist;
 
@@ -57,7 +58,7 @@ pub struct Gossip {
     pub whitelist: Whitelist,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum GossipEvent {
     NewConnection(Vec<libp2p::PeerId>),
     Disconnection(Vec<libp2p::PeerId>),

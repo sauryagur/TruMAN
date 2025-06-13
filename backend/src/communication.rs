@@ -4,32 +4,32 @@ use serde::{Deserialize, Serialize};
 use serde_json::Error as SerdeError;
 
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NewWolf {
     pub new_wolf_peer_id: PeerId,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WolfVerify {
     pub old_wolf_peer_id: PeerId,
     pub old_wolf_private_key: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Tag {
     Critical,
     High,
     Normal
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Message {
     pub message: String,
     pub tags: Vec<Tag>,
     pub timestamp: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum InteractionMessage {
     Ping, // Public & Private
     PingReply,
