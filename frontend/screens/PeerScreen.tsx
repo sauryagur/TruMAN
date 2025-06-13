@@ -7,7 +7,8 @@ import {
     StatusBar,
     TouchableOpacity,
     TextInput,
-    FlatList,
+    // FlatList,
+    ScrollView,
     Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -115,51 +116,58 @@ const PeerScreen: React.FC<PeerScreenProps> = ({ navigation, userRole = 'sheep' 
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
 
-            {/* Header */}
-            <View style={styles.header}>
-                <Text style={styles.title}>Peer Network</Text>
-                <Text style={styles.subtitle}>Signal strength & Connection status</Text>
-            </View>
+            <ScrollView 
+                showsVerticalScrollIndicator={false} 
+                // contentContainerStyle={}
+            >
+                {/* Header */}
+                <View style={styles.header}>
+                    <Text style={styles.title}>Peer Network</Text>
+                    <Text style={styles.subtitle}>Signal strength & Connection status</Text>
+                </View>
 
-            {/* Network Overview */}
-            <View style={[styles.networkOverviewCard, { borderColor: accentColor }]}>
-                <Text style={styles.networkOverviewTitle}>Network Overview</Text>
-                <View style={styles.networkStats}>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statValue}>{totalPeers}</Text>
-                        <Text style={styles.statLabel}>Peers</Text>
+                {/* Network Overview */}
+                <View style={[styles.networkOverviewCard, { borderColor: accentColor }]}>
+                    <Text style={styles.networkOverviewTitle}>Network Overview</Text>
+                    <View style={styles.networkStats}>
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>{totalPeers}</Text>
+                            <Text style={styles.statLabel}>Peers</Text>
+                        </View>
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>{networkSpeed}</Text>
+                            <Text style={styles.statLabel}>kbps</Text>
+                        </View>
                     </View>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statValue}>{networkSpeed}</Text>
-                        <Text style={styles.statLabel}>kbps</Text>
+                    <TouchableOpacity
+                        style={[styles.pingAllButton, { backgroundColor: accentColor }]}
+                        onPress={handlePingAllPeers}
+                    >
+                        <Text style={styles.pingAllText}>Ping All Peers</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.content}>
+                    <TextInput
+                        style={[styles.searchInput, { borderColor: accentColor }]}
+                        placeholder="Search...."
+                        placeholderTextColor="#888"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                    />
+
+                    {/* Replace FlatList with direct rendering of peers */}
+                    <View style={styles.listContainer}>
+                        {filteredPeers.map((peer, index) => (
+                            <React.Fragment key={peer.id}>
+                                <PeerItem peer={peer} onPing={handlePing} />
+                                {index < filteredPeers.length - 1 && <View style={{ height: 16 }} />}
+                            </React.Fragment>
+                        ))}
                     </View>
                 </View>
-                <TouchableOpacity
-                    style={[styles.pingAllButton, { backgroundColor: accentColor }]}
-                    onPress={handlePingAllPeers}
-                >
-                    <Text style={styles.pingAllText}>Ping all peers</Text>
-                </TouchableOpacity>
-            </View>
+            </ScrollView>
 
-            <View style={styles.content}>
-                <TextInput
-                    style={[styles.searchInput, { borderColor: accentColor }]}
-                    placeholder="Search...."
-                    placeholderTextColor="#888"
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                />
-
-                <FlatList
-                    data={filteredPeers}
-                    renderItem={renderPeerItem}
-                    keyExtractor={(item) => item.id}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.listContainer}
-                    ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
-                />
-            </View>
 
             {/* Use the new BottomNav component */}
             <BottomNav navigation={navigation} userRole={userRole} activeScreen="peers" />
@@ -203,13 +211,13 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         color: '#ffffff',
-        marginBottom: 20,
+        marginBottom: 10,
     },
     networkStats: {
         flexDirection: 'row',
         justifyContent: 'space-around',
         width: '100%',
-        marginBottom: 30,
+        marginBottom: 20,
     },
     statItem: {
         alignItems: 'center',
@@ -226,7 +234,7 @@ const styles = StyleSheet.create({
     pingAllButton: {
         backgroundColor: '#4A90E2', // Default, will be overridden by inline style
         borderRadius: 8,
-        paddingHorizontal: 40,
+        paddingHorizontal: 35,
         paddingVertical: 14,
     },
     pingAllText: {
