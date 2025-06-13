@@ -29,6 +29,10 @@ impl GossipRooms for Gossip {
         None
     }
     fn join_room(&mut self, topic_str: &str) -> Result<(), Box<dyn Error>> {
+        if self.get_topic_from_name(topic_str).is_some() {
+            return Ok(()); // Already joined
+        }
+
         let topic = IdentTopic::new(topic_str);
         self.topics.push((topic_str.to_string(), topic.clone()));
 
@@ -87,7 +91,7 @@ impl EventHandler for Gossip {
         return Some(GossipEvent::Disconnection(peers));
     }
     fn message(&mut self, peer_id: PeerId, message: Message) -> Option<GossipEvent> {
-        let is_public_room = message.topic.to_string().starts_with("public_");
+        let is_public_room = message.topic.to_string() == "general";
         let is_message_by_the_dm_op = peer_id.to_string().contains(&message.topic.to_string());
         let is_message_in_self_dm = self
             .peer_id()

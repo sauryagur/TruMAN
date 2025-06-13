@@ -25,14 +25,14 @@ pub enum Tag {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Message {
     pub message: String,
-    pub tags: Vec<Tag>,
+    pub tags: Tag,
     pub timestamp: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum InteractionMessage {
-    Ping, // Public & Private
-    PingReply,
+    Ping(u128), // Public & Private
+    PingReply(u128), // u128 -> Time gap
     Name, // Private
     NameReply(String),
     NewWolf(NewWolf), // Public
@@ -62,7 +62,7 @@ impl InteractionMessage {
             &message_data.room,
             serde_json::from_str(&message_data.message)?,
         ) {
-            (_, Self::Ping) => Ok(Self::Ping),
+            (_, Self::Ping(x)) => Ok(Self::Ping(x)),
             (Room::DirectMessage(_), Self::Name) => Ok(Self::Name),
             (Room::PublicRoom(_), Self::NewWolf(new_wolf)) => {
                 if !whitelist.contains(&message_data.peer) {

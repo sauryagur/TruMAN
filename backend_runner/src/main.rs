@@ -11,9 +11,10 @@ fn main() {
     let whitelist = FFIList::from_vec(&whitelist).spread();
     init(whitelist.0, whitelist.1, whitelist.2);
     start_gossip_loop();
+    println!("here");
     let mut i = 0;
     loop {
-        if i > 5 {
+        if i > 3 {
             print_events(collect_events());
             break;
         }

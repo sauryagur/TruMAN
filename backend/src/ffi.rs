@@ -24,10 +24,16 @@ impl FFIList {
         }
     }
     pub fn to_vec(&self) -> Vec<String> {
+        if self.ptr.is_null() || self.sizes_ptr.is_null() || self.size == 0 {
+            return Vec::new();
+        }
         unsafe {
             let slices = std::slice::from_raw_parts(self.ptr, self.size);
             let sizes = std::slice::from_raw_parts(self.sizes_ptr, self.size);
             slices.iter().zip(sizes.iter()).map(|(&ptr, &len)| {
+                if ptr.is_null() {
+                    return String::new();
+                }
                 let slice = std::slice::from_raw_parts(ptr, len);
                 String::from_utf8_lossy(slice).to_string()
             }).collect::<Vec<String>>()
