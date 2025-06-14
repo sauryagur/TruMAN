@@ -4,14 +4,17 @@ pub mod ffi;
 
 use gossip::{Gossip, MyBehaviourEvent, GossipEvent, room::GossipRooms};
 use communication::{InteractionMessage};
+use libp2p::Swarm;
 use libp2p::{swarm::SwarmEvent};
 use std::sync::Arc;
+use std::task::{Context, Poll};
 use std::time::SystemTime;
 use futures_util::stream::StreamExt; // Import the required traits
 use tokio::{select, runtime::Runtime};
 use tokio::sync::Mutex;
 use once_cell::sync::Lazy;
-
+use futures::future::poll_fn;
+use crate::communication::Message;
 use crate::ffi::FFIList;
 use crate::{communication::NewWolf, gossip::GenerateRoomName};
 
@@ -33,6 +36,7 @@ pub extern "C" fn init(whitelist_ptr: *mut *mut u8, whitelist_sizes_ptr: *mut us
     ).to_vec();
     
     RUNTIME.block_on(async {
+        let mut guard = GOSSIP_INSTANCE.lock().await;
         let mut gossip = Gossip::new(&whitelist).unwrap();
         println!("Initialized with peer ID: {}", gossip.peer_id());
 
@@ -40,7 +44,7 @@ pub extern "C" fn init(whitelist_ptr: *mut *mut u8, whitelist_sizes_ptr: *mut us
         gossip.open_ears().unwrap();
 
         println!("Gossip instance initialized\nListening on {:?}", gossip.topics);
-        *GOSSIP_INSTANCE.lock().await = Some(gossip);
+        *guard = Some(gossip);
     });
 
     // Use the `whitelist` as needed
@@ -162,11 +166,40 @@ pub extern "C" fn ping_test() {
 }
 
 pub extern "C" fn get_peers() -> FFIList {
-    todo!()
+    RUNTIME.block_on(async {
+        let mut guard = GOSSIP_INSTANCE.lock().await;
+        let Some(gossip) = guard.as_mut() else {
+            println!("Gossip instance not initialized");
+            return FFIList::null();
+        };
+        let strings = gossip.peer_ids.iter()
+            .map(|peer_id| peer_id.to_string())
+            .collect::<Vec<String>>();
+
+        FFIList::from_vec(&strings)
+    })
 }
 
-pub extern "C" fn broadcast_message() {
-    todo!()
+pub extern "C" fn broadcast_message(message: *mut u8, message_size: usize, tag: *const u8, tag_size: usize) {
+    RUNTIME.block_on(async {
+        let mut guard = GOSSIP_INSTANCE.lock().await;
+        let Some(gossip) = guard.as_mut() else {
+            println!("Gossip instance not initialized");
+            return;
+        };
+        gossip.gossip(&InteractionMessage::Message(Message{
+            message: unsafe {
+                std::str::from_utf8_unchecked(std::slice::from_raw_parts(message, message_size))
+            }.to_string(),
+            tags: unsafe {
+                std::str::from_utf8_unchecked(std::slice::from_raw_parts(tag, tag_size))
+            }.to_string().into(),
+            timestamp: SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .expect("Time went backwards")
+                .as_millis() as u64, // Convert to milliseconds
+        }), gossip.get_topic_from_name("general").unwrap()).unwrap();
+    })
 }
 
 #[unsafe(no_mangle)]
@@ -239,7 +272,8 @@ pub async fn handle_event(gossip: &mut Gossip, event: SwarmEvent<MyBehaviourEven
             gossip.whitelist.add_peer(new_wolf.new_wolf_peer_id);
         },
         InteractionMessage::WolfVerify(_wolf_verify) => {
-            todo!();
+            // no checks for MVP :)))))
+            gossip.whitelist.add_peer(data.peer);
         }
         InteractionMessage::Other => {}, // ignore it
     }

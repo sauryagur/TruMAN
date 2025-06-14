@@ -144,6 +144,10 @@ impl EventHandler for Gossip {
                 println!("Local node is listening on {address}");
                 None
             }
+            SwarmEvent::ExpiredListenAddr { address, .. } => {
+                println!("Local node is now not listening on {address}");
+                None
+            }
             _ => None,
         }
     }

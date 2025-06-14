@@ -22,6 +22,16 @@ pub enum Tag {
     Normal
 }
 
+impl From<String> for Tag {
+    fn from(tag: String) -> Self {
+        match tag.as_str() {
+            "critical" => Tag::Critical,
+            "high" => Tag::High,
+            _ => Tag::Normal,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Message {
     pub message: String,

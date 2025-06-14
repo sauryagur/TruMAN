@@ -34,6 +34,7 @@ pub struct MyBehaviour {
     mdns: mdns::tokio::Behaviour,
 }
 
+
 #[derive(Debug)]
 pub enum GossipSendError {
     PublishError(gossipsub::PublishError),
