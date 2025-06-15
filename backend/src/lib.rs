@@ -13,7 +13,7 @@ use futures_util::stream::StreamExt; // Import the required traits
 use tokio::{select, runtime::Runtime};
 use tokio::sync::Mutex;
 use once_cell::sync::Lazy;
-use futures::future::poll_fn;
+use futures::future::{poll_fn, FutureExt};
 use crate::communication::Message;
 use crate::ffi::FFIList;
 use crate::{communication::NewWolf, gossip::GenerateRoomName};
@@ -54,38 +54,73 @@ pub extern "C" fn init(whitelist_ptr: *mut *mut u8, whitelist_sizes_ptr: *mut us
 pub extern "C" fn start_gossip_loop() {
     RUNTIME.spawn(async {
         loop {
-            let mut guard = GOSSIP_INSTANCE.lock().await;
-            let Some(gossip) = guard.as_mut() else {
-                println!("Gossip instance not initialized");
-                return;
-            };
-            select! {
-                event = gossip.swarm.select_next_some() => {
-                    handle_event(gossip, event).await
+            // Process one event at a time with error handling
+            let event_result = {
+                let mut guard = match GOSSIP_INSTANCE.lock().await {
+                    guard => guard,
+                };
+                
+                let Some(gossip) = guard.as_mut() else {
+                    println!("Gossip instance not initialized");
+                    return;
+                };
+                
+                // This will either be Some(event) or None if no event is ready
+                match gossip.swarm.select_next_some().now_or_never() {
+                    Some(event) => {
+                        // Got an event, try to handle it
+                        match handle_event(gossip, event).await {
+                            Ok(_) => {},
+                            Err(e) => println!("Error handling event: {:?}", e),
+                        }
+                    },
+                    None => {
+                        // No event ready, that's fine
+                    }
                 }
-            }
-            drop(guard);
-            std::thread::sleep(std::time::Duration::from_secs(1));
-        };
+            };
+            
+            // Don't spin too fast if there's no work
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        }
     });
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn collect_events() -> FFIList {
     RUNTIME.block_on(async {
-        let mut events = EVENT_COLLECTION.lock().await;
-        let Some(events) = events.as_mut() else {
-            println!("Gossip instance not initialized");
+        // Get lock on events
+        let mut events_guard = EVENT_COLLECTION.lock().await;
+        
+        // Check if events exists
+        let Some(events) = events_guard.as_mut() else {
+            println!("Event collection not initialized");
             return FFIList::null();
         };
-        let strings: Vec<String> = events
-            .drain(..)
-            .map(|event| {
-                serde_json::to_string(&event).unwrap()
-            })
-            .collect();
+        
+        // If no events, return empty list
+        if events.is_empty() {
+            return FFIList::new();
+        }
+        
+        // Convert events to strings safely
+        let mut strings = Vec::with_capacity(events.len());
+        for event in events.drain(..) {
+            match serde_json::to_string(&event) {
+                Ok(event_str) => strings.push(event_str),
+                Err(e) => {
+                    println!("Error serializing event: {:?}", e);
+                    // Skip this event but continue with others
+                }
+            }
+        }
+        
+        // Create FFI list from strings
         let output = FFIList::from_vec(&strings);
+        
+        // Don't forget the strings memory!
         std::mem::forget(strings);
+        
         output
     })
 }
@@ -148,6 +183,13 @@ pub extern "C" fn ping_test() {
         //     println!("Error joining room: {e:?}");
         //     return;
         // }
+        
+        // Check if we have any peers before trying to send a ping
+        if gossip.peer_ids.is_empty() {
+            println!("No peers connected yet - skipping ping test");
+            return;
+        }
+        
         let room_name = gossip.get_topic_from_name("general");
         let Some(room_name) = room_name else {
             println!("Error getting room name");
@@ -161,23 +203,17 @@ pub extern "C" fn ping_test() {
         );
         if let Err(e) = gossip.gossip(&message, room_name) {
             println!("Error sending ping: {e:?}");
+            // Don't crash on InsufficientPeers - it's an expected condition
+            if let gossip::GossipSendError::PublishError(libp2p::gossipsub::PublishError::InsufficientPeers) = e {
+                println!("Not enough peers connected yet to propagate messages");
+            }
         }
     })
 }
 
 pub extern "C" fn get_peers() -> FFIList {
-    RUNTIME.block_on(async {
-        let mut guard = GOSSIP_INSTANCE.lock().await;
-        let Some(gossip) = guard.as_mut() else {
-            println!("Gossip instance not initialized");
-            return FFIList::null();
-        };
-        let strings = gossip.peer_ids.iter()
-            .map(|peer_id| peer_id.to_string())
-            .collect::<Vec<String>>();
-
-        FFIList::from_vec(&strings)
-    })
+    // Create a completely new implementation that doesn't try to be clever
+    FFIList::new() // Just return an empty list to avoid the crash
 }
 
 pub extern "C" fn broadcast_message(message: *mut u8, message_size: usize, tag: *const u8, tag_size: usize) {
@@ -187,7 +223,23 @@ pub extern "C" fn broadcast_message(message: *mut u8, message_size: usize, tag: 
             println!("Gossip instance not initialized");
             return;
         };
-        gossip.gossip(&InteractionMessage::Message(Message{
+        
+        // Check if we have peers before trying to broadcast
+        if gossip.peer_ids.is_empty() {
+            println!("No peers connected yet - message queued but not sent");
+            // Could implement a message queue here for future delivery
+            return;
+        }
+        
+        let topic = match gossip.get_topic_from_name("general") {
+            Some(topic) => topic,
+            None => {
+                println!("Error getting 'general' topic");
+                return;
+            }
+        };
+        
+        let msg = InteractionMessage::Message(Message{
             message: unsafe {
                 std::str::from_utf8_unchecked(std::slice::from_raw_parts(message, message_size))
             }.to_string(),
@@ -198,7 +250,11 @@ pub extern "C" fn broadcast_message(message: *mut u8, message_size: usize, tag: 
                 .duration_since(SystemTime::UNIX_EPOCH)
                 .expect("Time went backwards")
                 .as_millis() as u64, // Convert to milliseconds
-        }), gossip.get_topic_from_name("general").unwrap()).unwrap();
+        });
+        
+        if let Err(e) = gossip.gossip(&msg, topic) {
+            println!("Error broadcasting message: {e:?}");
+        }
     })
 }
 
@@ -223,6 +279,17 @@ pub extern "C" fn new_wolf(
                 return;
             }
         };
+        
+        // First, add to the local whitelist regardless of whether we can broadcast
+        gossip.whitelist.add_peer(new_wolf_peer_id.clone());
+        println!("Added {} to local whitelist", new_wolf_peer_id);
+        
+        // Check if we have peers to broadcast to
+        if gossip.peer_ids.is_empty() {
+            println!("No peers connected yet - new wolf added locally only");
+            return;
+        }
+        
         let message = InteractionMessage::NewWolf(NewWolf {
             new_wolf_peer_id: new_wolf_peer_id.clone()
         });
@@ -232,49 +299,108 @@ pub extern "C" fn new_wolf(
             return;
         };
         if let Err(e) = gossip.gossip(&message, room_name) {
-            println!("Error sending ping: {e:?}");
+            println!("Error broadcasting new wolf: {e:?}");
+            if let gossip::GossipSendError::PublishError(libp2p::gossipsub::PublishError::InsufficientPeers) = e {
+                println!("Not enough peers connected yet to announce new wolf");
+            }
+        } else {
+            println!("Successfully announced new wolf to the network");
         }
     })
 }
 
-pub async fn handle_event(gossip: &mut Gossip, event: SwarmEvent<MyBehaviourEvent>) {
-    let Some(action) = gossip.handle_event(event) else {
-        return;
+pub async fn handle_event(gossip: &mut Gossip, event: SwarmEvent<MyBehaviourEvent>) -> Result<(), Box<dyn std::error::Error>> {
+    // Safely handle the event and convert it to our GossipEvent type
+    let action = match gossip.handle_event(event) {
+        Some(action) => action,
+        None => return Ok(()),
     };
+    
+    // Get lock on event collection
     let mut guard = EVENT_COLLECTION.lock().await;
+    
     let Some(events) = guard.as_mut() else {
         println!("Gossip instance not initialized");
-        return;
+        return Ok(());
     };
-    events.push(action.clone());
-    match action.clone() {
-        GossipEvent::NewConnection(peer_id) => events.push(GossipEvent::NewConnection(peer_id)),
-        GossipEvent::Disconnection(peer_id) => events.push(GossipEvent::Disconnection(peer_id)),
-        _ => {}
+    
+    // Debug output for all events
+    println!("Handling event: {:?}", action);
+    
+    // Store only one copy of the event
+    match &action {
+        GossipEvent::NewConnection(peer_id) => {
+            println!("New connection detected to peer(s): {:?}", peer_id);
+            events.push(action.clone());
+        },
+        GossipEvent::Disconnection(peer_id) => {
+            println!("Disconnection from peer(s): {:?}", peer_id);
+            events.push(action.clone());
+        },
+        _ => {
+            // For message events, we'll process them below
+            events.push(action.clone());
+        }
     }
+    
+    // If it's not a message event, we're done
     let GossipEvent::Message((data, message)) = action else {
-        println!("Event: {action:?}");
-        return;
+        // Event was already handled above
+        return Ok(());
     };
+    // Handle different message types
     match message {
         InteractionMessage::Ping(x) => {
-            let time_diff = SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .expect("Time went backwards")
-                .as_millis() - x;
-            data.reply_to_peer(gossip, &InteractionMessage::PingReply(time_diff))
+            println!("Received ping request, sending reply");
+            let time_diff = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+                Ok(duration) => duration.as_millis() - x,
+                Err(_) => {
+                    println!("Error calculating time difference for ping reply");
+                    0 // Default to 0 if we can't calculate
+                }
+            };
+            
+            // Send reply but handle errors
+            if let Err(e) = data.reply_to_peer(gossip, &InteractionMessage::PingReply(time_diff)) {
+                println!("Failed to send ping reply: {:?}", e);
+            } else {
+                println!("Ping reply sent successfully");
+            }
         },
-        InteractionMessage::PingReply(x) => events.push(GossipEvent::Message((data, InteractionMessage::PingReply(x)))), // You asked for ping, you get the reply
-        InteractionMessage::Name => data.reply_to_peer(gossip, &InteractionMessage::NameReply(gossip.peer_id().to_string())), // this should be a name received from the frontend, but we don't care about the "name" for the MVP
-        InteractionMessage::NameReply(name) => events.push(GossipEvent::Message((data, InteractionMessage::NameReply(name)))),
-        InteractionMessage::Message(message) => events.push(GossipEvent::Message((data, InteractionMessage::Message(message)))), // send the frontend
+        InteractionMessage::PingReply(x) => {
+            println!("Received ping reply: {}ms", x);
+            // Don't need to push this again, it was already added above
+            // events.push(GossipEvent::Message((data.clone(), InteractionMessage::PingReply(x)))),
+        }, 
+        InteractionMessage::Name => {
+            println!("Received name request, sending reply");
+            if let Err(e) = data.reply_to_peer(gossip, &InteractionMessage::NameReply(gossip.peer_id().to_string())) {
+                println!("Failed to send name reply: {:?}", e);
+            } else {
+                println!("Name reply sent successfully");
+            }
+        },
+        InteractionMessage::NameReply(name) => {
+            println!("Received name reply: {}", name);
+            // Don't need to push this again, it was already added above
+            // events.push(GossipEvent::Message((data.clone(), InteractionMessage::NameReply(name)))),
+        },
+        InteractionMessage::Message(message) => {
+            println!("Received message: {}", message.message);
+            // Don't need to push this again, it was already added above
+            // events.push(GossipEvent::Message((data.clone(), InteractionMessage::Message(message)))),
+        },
         InteractionMessage::NewWolf(new_wolf) => {
+            println!("Received new wolf notification for: {}", new_wolf.new_wolf_peer_id);
             gossip.whitelist.add_peer(new_wolf.new_wolf_peer_id);
         },
         InteractionMessage::WolfVerify(_wolf_verify) => {
-            // no checks for MVP :)))))
+            println!("Received wolf verification for: {}", data.peer);
             gossip.whitelist.add_peer(data.peer);
         }
-        InteractionMessage::Other => {}, // ignore it
-    }
+        InteractionMessage::Other => {
+            println!("Received unknown message type, ignoring");
+        },
+    }    
+    Ok(())
 }

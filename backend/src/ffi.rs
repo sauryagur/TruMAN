@@ -23,6 +23,12 @@ impl FFIList {
             size: 0,
         }
     }
+    
+    pub fn new() -> Self {
+        // Create an empty but valid FFIList
+        let empty_vec: Vec<String> = Vec::new();
+        Self::from_vec(&empty_vec)
+    }
     pub fn to_vec(&self) -> Vec<String> {
         if self.ptr.is_null() || self.sizes_ptr.is_null() || self.size == 0 {
             return Vec::new();

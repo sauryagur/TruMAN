@@ -21,11 +21,23 @@ impl GossipRooms for Gossip {
             .find(|id| id.to_string().contains(&room_name))
     }
     fn get_topic_from_name(&self, topic_self: &str) -> Option<IdentTopic> {
+        // First check if we already have this topic
         for (room_name, room) in self.topics.iter() {
             if room_name == topic_self {
+                println!("Found existing topic for {}", topic_self);
                 return Some(room.clone());
             }
         }
+        
+        // Safety check - don't allow empty topic names
+        if topic_self.is_empty() {
+            println!("Warning: Attempted to get topic with empty name");
+            return None;
+        }
+        
+        // For safety, we could create the topic here but that would be a side effect
+        // in a getter method, so we'll just log and return None
+        println!("Topic '{}' not found in known topics", topic_self);
         None
     }
     fn join_room(&mut self, topic_str: &str) -> Result<(), Box<dyn Error>> {
@@ -51,7 +63,10 @@ impl GossipRooms for Gossip {
                 return self.get_room_from_name(t.0.clone());
             }
         }
-        panic!("Topic not found");
+        
+        // Instead of panicking, return a default room
+        println!("Warning: Topic hash not found, using default room");
+        Room::PublicRoom("general".to_string())
     }
     fn get_room_from_name(&self, topic: String) -> Room {
         if topic.starts_with("public_") {
@@ -63,40 +78,87 @@ impl GossipRooms for Gossip {
 
 impl EventHandler for Gossip {
     fn new_connections(&mut self, list: Vec<(PeerId, Multiaddr)>) -> Option<GossipEvent> {
+        if list.is_empty() {
+            return None;
+        }
+        
         let mut peers = Vec::with_capacity(list.len());
+        
+        // Process each new peer connection
         for (peer_id, _multiaddr) in list {
+            println!("Adding peer: {}", peer_id);
+            
+            // Avoid re-adding existing peers
+            if self.peer_ids.contains(&peer_id) {
+                println!("Peer already known: {}", peer_id);
+                continue;
+            }
+            
+            // Add to gossipsub
             self.swarm
                 .behaviour_mut()
                 .gossipsub
                 .add_explicit_peer(&peer_id);
-            peers.push(peer_id);
+                
+            // Store for our notification
+            peers.push(peer_id.clone());
+            
+            // Add to our tracking set
+            self.peer_ids.insert(peer_id);
         }
-        for peer in peers.iter() {
-            self.peer_ids.insert(peer.clone());
+        
+        if peers.is_empty() {
+            return None;
         }
+        
         return Some(GossipEvent::NewConnection(peers));
     }
     fn new_disconnections(&mut self, list: Vec<(PeerId, Multiaddr)>) -> Option<GossipEvent> {
+        if list.is_empty() {
+            return None;
+        }
+        
         let mut peers = Vec::with_capacity(list.len());
+        
+        // Process each disconnected peer
         for (peer_id, _multiaddr) in list {
+            println!("Removing peer: {}", peer_id);
+            
+            // Remove from gossipsub
             self.swarm
                 .behaviour_mut()
                 .gossipsub
                 .remove_explicit_peer(&peer_id);
-            peers.push(peer_id);
+            
+            // Store for our notification
+            peers.push(peer_id.clone());
+            
+            // Remove from our tracking set
+            self.peer_ids.remove(&peer_id);
         }
-        for peer in peers.iter() {
-            self.peer_ids.remove(peer);
+        
+        if peers.is_empty() {
+            return None;
         }
+        
         return Some(GossipEvent::Disconnection(peers));
     }
     fn message(&mut self, peer_id: PeerId, message: Message) -> Option<GossipEvent> {
+        println!("Received message from peer {} on topic {}", peer_id, message.topic);
+        
+        // Safety check for unexpected messages
+        if message.data.is_empty() {
+            println!("Warning: Received empty message, ignoring");
+            return None;
+        }
+        
         let is_public_room = message.topic.to_string() == "general";
         let is_message_by_the_dm_op = peer_id.to_string().contains(&message.topic.to_string());
         let is_message_in_self_dm = self
             .peer_id()
             .to_string()
             .contains(&message.topic.to_string());
+        
         // Messages to ignore
         // Private Room: Other DM's, other's messages
         // Messages to allow

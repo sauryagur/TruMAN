@@ -39,16 +39,50 @@ pub struct MyBehaviour {
 pub enum GossipSendError {
     PublishError(gossipsub::PublishError),
     SerdeError(serde_json::Error),
-    Other
+    Other(String)
 }
+
+impl std::fmt::Display for GossipSendError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GossipSendError::PublishError(e) => write!(f, "PublishError: {:?}", e),
+            GossipSendError::SerdeError(e) => write!(f, "SerdeError: {}", e),
+            GossipSendError::Other(s) => write!(f, "Other error: {}", s),
+        }
+    }
+}
+
+impl std::error::Error for GossipSendError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            GossipSendError::PublishError(_) => None, // libp2p's errors don't implement Error
+            GossipSendError::SerdeError(e) => Some(e),
+            GossipSendError::Other(_) => None,
+        }
+    }
+}
+
 impl From<gossipsub::PublishError> for GossipSendError {
     fn from(err: gossipsub::PublishError) -> Self {
         GossipSendError::PublishError(err)
     }
 }
+
 impl From<serde_json::Error> for GossipSendError {
     fn from(err: serde_json::Error) -> Self {
         GossipSendError::SerdeError(err)
+    }
+}
+
+impl From<String> for GossipSendError {
+    fn from(err: String) -> Self {
+        GossipSendError::Other(err)
+    }
+}
+
+impl From<&str> for GossipSendError {
+    fn from(err: &str) -> Self {
+        GossipSendError::Other(err.to_string())
     }
 }
 
