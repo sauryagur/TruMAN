@@ -11,7 +11,8 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import BottomNav from '../components/BottomNav'; // Import the new BottomNav component
+import BottomNav from '../components/BottomNav';
+import backendService from '../services/backend';
 
 interface WolfNode {
   id: string;
@@ -47,21 +48,38 @@ const WolfItem: React.FC<WolfItemProps> = ({ wolf, onPromote }) => (
     </View>
 );
 
-const AdminNewWolf: React.FC<AdminNewWolfProps> = ({ navigation, userRole = 'wolf' }) => { // Default to wolf for this screen
+const AdminNewWolf: React.FC<AdminNewWolfProps> = ({ navigation, userRole = 'wolf' }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [wolves, setWolves] = useState<WolfNode[]>([
-    { id: '65513', responseTime: 250, isOnline: true },
-    { id: '13413', responseTime: 102, isOnline: true },
-    { id: '32223', responseTime: 829, isOnline: true },
-    { id: '63243', responseTime: 544, isOnline: true },
-    { id: '92139', responseTime: 312, isOnline: true },
-  ]);
-
-  const [filteredWolves, setFilteredWolves] = useState<WolfNode[]>(wolves);
+  const [wolves, setWolves] = useState<WolfNode[]>([]);
+  const [filteredWolves, setFilteredWolves] = useState<WolfNode[]>([]);
 
   // Determine accent color for this screen (always red for wolf admin)
   const accentColor = '#e74c3c';
 
+  // Fetch peers on component mount
+  useEffect(() => {
+    const fetchPeers = () => {
+      try {
+        const peers = backendService.getPeers();
+        const newWolves = peers.map(peer => ({
+          id: peer,
+          responseTime: Math.floor(Math.random() * 800) + 50, // Random response time for demo
+          isOnline: true
+        }));
+        setWolves(newWolves);
+      } catch (error) {
+        console.error('Failed to fetch peers:', error);
+      }
+    };
+    
+    fetchPeers();
+    
+    // Refresh peers every 10 seconds
+    const interval = setInterval(fetchPeers, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Filter wolves based on search query
   useEffect(() => {
     const filtered = wolves.filter(wolf =>
         wolf.id.toLowerCase().includes(searchQuery.toLowerCase())
@@ -69,20 +87,7 @@ const AdminNewWolf: React.FC<AdminNewWolfProps> = ({ navigation, userRole = 'wol
     setFilteredWolves(filtered);
   }, [searchQuery, wolves]);
 
-  useEffect(() => {
-    // Simulate real-time response time updates
-    const interval = setInterval(() => {
-      setWolves(prevWolves =>
-          prevWolves.map(wolf => ({
-            ...wolf,
-            responseTime: Math.floor(Math.random() * 800) + 50,
-          }))
-      );
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
-
+  // Handle promotion of a peer to wolf
   const handlePromote = (wolfId: string) => {
     Alert.alert(
         'Promote Wolf',
@@ -91,13 +96,24 @@ const AdminNewWolf: React.FC<AdminNewWolfProps> = ({ navigation, userRole = 'wol
           text: 'Cancel',
           style: 'cancel',
         },
-          {
-            text: 'Promote',
-            onPress: () => {
-              setWolves(prevWolves => prevWolves.filter(wolf => wolf.id !== wolfId));
-              Alert.alert('Success', `Wolf ${wolfId} has been promoted!`);
-            },
-          },]
+        {
+          text: 'Promote',
+          onPress: () => {
+            try {
+              const success = backendService.promoteToWolf(wolfId);
+              if (success) {
+                // Remove from the list to simulate success
+                setWolves(prevWolves => prevWolves.filter(wolf => wolf.id !== wolfId));
+                Alert.alert('Success', `Wolf ${wolfId} has been promoted!`);
+              } else {
+                Alert.alert('Error', 'Failed to promote peer to wolf');
+              }
+            } catch (error) {
+              console.error('Failed to promote wolf:', error);
+              Alert.alert('Error', 'Failed to promote peer to wolf');
+            }
+          },
+        },]
     );
   };
 

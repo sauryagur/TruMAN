@@ -7,9 +7,12 @@ import {
     StatusBar,
     TouchableOpacity,
     FlatList,
+    TextInput,
+    Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import BottomNav from '../components/BottomNav'; // Import the new BottomNav component
+import BottomNav from '../components/BottomNav';
+import backendService from '../services/backend';
 
 interface Message {
     id: string;
@@ -32,30 +35,109 @@ const categoryColors = {
 };
 
 const MessagesScreen: React.FC<MessagesScreenProps> = ({ navigation, userRole = 'sheep' }) => {
-    const allMessages: Message[] = [
-        { id: '1', sender: 'Wolf Alpha', time: '2 mins ago', content: 'Emergency evacuation notice: Clear the downtown area immediately. Safe zones are marked in green.', category: 'Critical' },
-        { id: '2', sender: 'Wolf Beta', time: '15 mins ago', content: 'Network maintenance scheduled for 03:00. Brief connectivity interruption expected.', category: 'High' },
-        { id: '3', sender: 'Wolf Gamma', time: '1 hour ago', content: 'Weather Alert: Severe storm approaching from the west. Seek shelter immediately.', category: 'Normal' },
-        { id: '4', sender: 'Wolf Delta', time: 'Yesterday', content: 'Routine system update completed successfully. No action required.', category: 'Normal' }, // Changed to 'Normal'
-        { id: '5', sender: 'Wolf Alpha', time: '2 hours ago', content: 'High traffic detected in sector 7. Avoid unnecessary movement.', category: 'High' },
-        { id: '6', sender: 'Wolf Gamma', time: '30 mins ago', content: 'All clear in Zone B. Resume normal activities.', category: 'Normal' }, // Changed to 'Normal'
-    ];
-
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
-    const [filteredMessages, setFilteredMessages] = useState<Message[]>(allMessages);
+    const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
+    const [allMessages, setAllMessages] = useState<Message[]>([]);
+    const [newMessage, setNewMessage] = useState('');
+    const [messageCategory, setMessageCategory] = useState<'Normal' | 'High' | 'Critical'>('Normal');
 
     // Determine accent color based on user role for bottom navigation and selected filter buttons
     const accentColor = userRole === 'wolf' ? '#e74c3c' : '#4A90E2';
     const inactiveNavColor = '#666';
 
+    // Effect to poll for new messages
+    useEffect(() => {
+        const fetchMessages = () => {
+            try {
+                const events = backendService.collectEvents();
+                if (events.length > 0) {
+                    const newMessages = events
+                        .map(event => {
+                            try {
+                                const parsed = JSON.parse(event);
+                                if (parsed.type === 'message' && parsed.data && parsed.data.message) {
+                                    const msg = parsed.data.message;
+                                    return {
+                                        id: `msg-${Date.now()}-${Math.random()}`,
+                                        sender: parsed.data.peer || 'Unknown',
+                                        time: new Date().toLocaleTimeString(),
+                                        content: msg.message,
+                                        category: msg.tags === 'emergency' ? 'Critical' : 
+                                                 msg.tags === 'important' ? 'High' : 'Normal'
+                                    };
+                                }
+                                return null;
+                            } catch (e) {
+                                console.error('Failed to parse event:', e);
+                                return null;
+                            }
+                        })
+                        .filter(Boolean) as Message[];
+                    
+                    if (newMessages.length > 0) {
+                        setAllMessages(prev => [...newMessages, ...prev]);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch messages:', error);
+            }
+        };
+        
+        // Poll for messages every 2 seconds
+        const interval = setInterval(fetchMessages, 2000);
+        
+        return () => clearInterval(interval);
+    }, []);
+
+    // Filter messages when category or messages change
     useEffect(() => {
         if (selectedCategory === 'All') {
             setFilteredMessages(allMessages);
         } else {
-            // Filter by category, ensuring it's a valid category from `categoryColors`
             setFilteredMessages(allMessages.filter(msg => msg.category === selectedCategory));
         }
-    }, [selectedCategory]);
+    }, [selectedCategory, allMessages]);
+
+    // Function to send a new message
+    const sendMessage = () => {
+        if (!newMessage.trim()) {
+            Alert.alert('Error', 'Please enter a message');
+            return;
+        }
+        
+        let tag = 'general';
+        if (messageCategory === 'Critical') tag = 'emergency';
+        if (messageCategory === 'High') tag = 'important';
+        
+        try {
+            const success = backendService.broadcastMessage(newMessage, tag);
+            if (success) {
+                // Add to local messages immediately for UI responsiveness
+                const newMsg: Message = {
+                    id: `local-${Date.now()}`,
+                    sender: 'You',
+                    time: 'Just now',
+                    content: newMessage,
+                    category: messageCategory
+                };
+                setAllMessages(prev => [newMsg, ...prev]);
+                setNewMessage('');
+                Alert.alert('Success', 'Message sent successfully');
+            } else {
+                Alert.alert('Error', 'Failed to send message');
+            }
+        } catch (error) {
+            console.error('Failed to send message:', error);
+            Alert.alert('Error', 'Failed to send message');
+        }
+    };
+
+    // Toggle message category
+    const toggleCategory = () => {
+        if (messageCategory === 'Normal') setMessageCategory('High');
+        else if (messageCategory === 'High') setMessageCategory('Critical');
+        else setMessageCategory('Normal');
+    };
 
     const renderMessageCard = ({ item }: { item: Message }) => (
         <View style={styles.messageCard}>
@@ -104,6 +186,26 @@ const MessagesScreen: React.FC<MessagesScreenProps> = ({ navigation, userRole = 
                 contentContainerStyle={styles.listContainer}
                 ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
             />
+
+            {/* Message input area */}
+            <View style={styles.messageInputContainer}>
+                <TextInput
+                    style={styles.messageInput}
+                    placeholder="Type your message here..."
+                    placeholderTextColor="#999"
+                    value={newMessage}
+                    onChangeText={setNewMessage}
+                    multiline
+                />
+                <View style={styles.messageInputActions}>
+                    <TouchableOpacity onPress={toggleCategory} style={styles.categoryToggle}>
+                        <Text style={styles.categoryToggleText}>{messageCategory}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
+                        <Ionicons name="send" size={24} color="#fff" />
+                    </TouchableOpacity>
+                </View>
+            </View>
 
             {/* Use the new BottomNav component */}
             <BottomNav navigation={navigation} userRole={userRole} activeScreen="Messages" />
@@ -203,6 +305,44 @@ const styles = StyleSheet.create({
         height: 10,
         borderRadius: 5,
         // Position now handled by messageTimeContainer
+    },
+    messageInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderTopWidth: 1,
+        borderTopColor: '#333',
+        backgroundColor: '#2a2a3a',
+    },
+    messageInput: {
+        flex: 1,
+        borderRadius: 8,
+        padding: 12,
+        backgroundColor: '#333',
+        color: '#fff',
+        fontSize: 16,
+        marginRight: 8,
+    },
+    messageInputActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    categoryToggle: {
+        backgroundColor: accentColor,
+        borderRadius: 8,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        marginRight: 8,
+    },
+    categoryToggleText: {
+        color: '#fff',
+        fontWeight: '600',
+        fontSize: 14,
+    },
+    sendButton: {
+        backgroundColor: '#4CAF50',
+        borderRadius: 8,
+        padding: 10,
     },
     // The footer and bottomNav styles are now managed within the BottomNav component
     footer: {

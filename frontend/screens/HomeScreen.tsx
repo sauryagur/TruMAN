@@ -10,6 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ScrollView } from 'react-native';
 import BottomNav from '../components/BottomNav';
+import backendService from '../services/backend';
 
 interface StatusCardProps {
     icon: keyof typeof Ionicons.glyphMap;
@@ -36,22 +37,52 @@ const StatusCard: React.FC<StatusCardProps> = ({ icon, title, value, color, bord
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ userRole = 'sheep', navigation}) => {
     console.log("Rendring HomeScreen");
-    const [networkStatus, setNetworkStatus] = useState('Connected');
-    const [connectedPeers, setConnectedPeers] = useState(156);
-    const [lastBroadcast, setLastBroadcast] = useState('5 minutes ago');
-    const [networkStrength, setNetworkStrength] = useState('250 kbps');
+    const [networkStatus, setNetworkStatus] = useState('Initializing...');
+    const [connectedPeers, setConnectedPeers] = useState(0);
+    const [lastBroadcast, setLastBroadcast] = useState('Never');
+    const [networkStrength, setNetworkStrength] = useState('0 kbps');
     const [publicKey, setPublicKey] = useState('')
 
     // Determine accent color based on user role
     const accentColor = userRole === 'wolf' ? '#e74c3c' : '#4A90E2'; // Red for wolf, blue for sheep
 
     useEffect(() => {
-        // Simulate real-time updates
-        const interval = setInterval(() => {
-            setConnectedPeers(prev => prev + Math.floor(Math.random() * 5) - 2);
-            setNetworkStrength(`${Math.floor(Math.random() * 500) + 100} kbps`);
-        }, 10000);
-        return () => clearInterval(interval);
+        // Initialize network connection
+        const initNetwork = async () => {
+            try {
+                const success = backendService.initNetwork();
+                if (success) {
+                    setNetworkStatus('Connected');
+                    backendService.startGossipLoop();
+                    
+                    // Get local peer ID
+                    const peerId = backendService.getLocalPeerId();
+                    setPublicKey(peerId);
+                } else {
+                    setNetworkStatus('Error');
+                }
+            } catch (error) {
+                console.error('Failed to initialize network:', error);
+                setNetworkStatus('Error');
+            }
+        };
+        
+        initNetwork();
+        
+        // Set up polling for peer updates
+        const peerInterval = setInterval(() => {
+            try {
+                const peers = backendService.getPeers();
+                setConnectedPeers(peers.length);
+            } catch (error) {
+                console.error('Failed to get peers:', error);
+            }
+        }, 5000);
+        
+        // Clean up on unmount
+        return () => {
+            clearInterval(peerInterval);
+        };
     }, []);
 
     const getAdditionalInfo = () => {

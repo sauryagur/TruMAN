@@ -7,12 +7,12 @@ import {
     StatusBar,
     TouchableOpacity,
     TextInput,
-    // FlatList,
     ScrollView,
     Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import BottomNav from '../components/BottomNav'; // Import the new BottomNav component
+import BottomNav from '../components/BottomNav';
+import backendService from '../services/backend';
 
 interface PeerNode {
     id: string;
@@ -48,25 +48,42 @@ const PeerItem: React.FC<PeerItemProps> = ({ peer, onPing }) => (
     </View>
 );
 
-const PeerScreen: React.FC<PeerScreenProps> = ({ navigation, userRole = 'sheep' }) => { // Default to sheep for this screen
+const PeerScreen: React.FC<PeerScreenProps> = ({ navigation, userRole = 'sheep' }) => {
     const [searchQuery, setSearchQuery] = useState('');
-    const [peers, setPeers] = useState<PeerNode[]>([
-        { id: '65513', responseTime: 250, isOnline: true },
-        { id: '13413', responseTime: 102, isOnline: true },
-        { id: '32223', responseTime: 829, isOnline: true },
-        { id: '63243', responseTime: 544, isOnline: true },
-        { id: '92139', responseTime: 312, isOnline: true },
-        { id: '77890', responseTime: 180, isOnline: true },
-        { id: '10101', responseTime: 650, isOnline: false },
-    ]);
-
-    const [filteredPeers, setFilteredPeers] = useState<PeerNode[]>(peers);
-    const [totalPeers, setTotalPeers] = useState(156); // From image
-    const [networkSpeed, setNetworkSpeed] = useState(250); // From image
+    const [peers, setPeers] = useState<PeerNode[]>([]);
+    const [filteredPeers, setFilteredPeers] = useState<PeerNode[]>([]);
+    const [totalPeers, setTotalPeers] = useState(0);
+    const [networkSpeed, setNetworkSpeed] = useState(0);
 
     // Determine accent color based on user role
     const accentColor = userRole === 'wolf' ? '#e74c3c' : '#4A90E2'; // Red for wolf, blue for sheep
 
+    // Fetch peers on component mount
+    useEffect(() => {
+        const fetchPeers = () => {
+            try {
+                const peerIds = backendService.getPeers();
+                const newPeers = peerIds.map(id => ({
+                    id,
+                    responseTime: Math.floor(Math.random() * 800) + 50, // Random response time for demo
+                    isOnline: true
+                }));
+                setPeers(newPeers);
+                setTotalPeers(peerIds.length);
+                setNetworkSpeed(Math.floor(Math.random() * 200) + 150); // Simulate network speed
+            } catch (error) {
+                console.error('Failed to fetch peers:', error);
+            }
+        };
+        
+        fetchPeers();
+        
+        // Refresh peers every 5 seconds
+        const interval = setInterval(fetchPeers, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Filter peers based on search query
     useEffect(() => {
         const filtered = peers.filter(peer =>
             peer.id.toLowerCase().includes(searchQuery.toLowerCase())
@@ -74,36 +91,39 @@ const PeerScreen: React.FC<PeerScreenProps> = ({ navigation, userRole = 'sheep' 
         setFilteredPeers(filtered);
     }, [searchQuery, peers]);
 
-    useEffect(() => {
-        // Simulate real-time response time and network updates
-        const interval = setInterval(() => {
-            setPeers(prevPeers =>
-                prevPeers.map(peer => ({
-                    ...peer,
-                    responseTime: Math.floor(Math.random() * 800) + 50,
-                    isOnline: Math.random() > 0.1, // Simulate some peers going offline
-                }))
-            );
-            setTotalPeers(Math.floor(Math.random() * 100) + 100); // Simulate fluctuating peer count
-            setNetworkSpeed(Math.floor(Math.random() * 200) + 150); // Simulate fluctuating speed
-        }, 5000);
-
-        return () => clearInterval(interval);
-    }, []);
-
+    // Handle ping for a specific peer
     const handlePing = (peerId: string) => {
         Alert.alert('Ping', `Pinging peer ${peerId}...`);
-        // In a real application, you would send a ping request here
-        // And update the response time for this specific peer
+        
+        try {
+            const success = backendService.pingPeer(peerId);
+            if (success) {
+                // Update the response time for this peer (simulated for demo)
+                setPeers(prevPeers => 
+                    prevPeers.map(peer => 
+                        peer.id === peerId 
+                            ? { ...peer, responseTime: Math.floor(Math.random() * 200) + 50 } 
+                            : peer
+                    )
+                );
+            } else {
+                Alert.alert('Error', 'Failed to ping peer');
+            }
+        } catch (error) {
+            console.error('Failed to ping peer:', error);
+            Alert.alert('Error', 'Failed to ping peer');
+        }
     };
 
+    // Handle ping all peers
     const handlePingAllPeers = () => {
         Alert.alert('Ping All', 'Pinging all connected peers...');
-        // In a real application, this would trigger a broadcast ping
-        setPeers(prevPeers =>
-            prevPeers.map(peer => ({
-                ...peer,
-                responseTime: Math.floor(Math.random() * 800) + 50, // Simulate new ping responses
+        
+        // For demo purposes, just update all response times
+        setPeers(prevPeers => 
+            prevPeers.map(peer => ({ 
+                ...peer, 
+                responseTime: Math.floor(Math.random() * 200) + 50 
             }))
         );
     };
