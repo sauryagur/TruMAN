@@ -4,7 +4,8 @@ import {Ionicons} from '@expo/vector-icons';
 import HomeScreen from './screens/HomeScreen';
 import AdminNewWolf from './screens/AdminNewWolf';
 import PeerScreen from './screens/PeerScreen';
-import MessagesScreen from "./screens/MessagesScreen"; // Import PeerScreen
+import MessagesScreen from "./screens/MessagesScreen";
+import BroadcastMessages from "./screens/BroadcastMessages"; // Import the new BroadcastMessages component
 
 type UserRole = 'sheep' | 'wolf';
 // Define all possible screens in your application for navigation
@@ -171,15 +172,8 @@ const toggleUserRole = () => {
         case 'messages':
             return <MessagesScreen navigation={navigation} userRole={userRole} />;
         case 'wolfBroadcast':
-            return (
-                <View style={styles.placeholderScreen}>
-                    <Text style={styles.placeholderText}>Broadcast Screen Coming Soon!</Text>
-                    <TouchableOpacity style={styles.backButtonPlaceholder} onPress={() => navigation.goBack()}>
-                        <Ionicons name="arrow-back" size={24} color="#ffffff"/>
-                        <Text style={styles.backButtonTextPlaceholder}>Go Back</Text>
-                    </TouchableOpacity>
-                </View>
-            );
+            // added the option for wolf node to broadcast 
+            return <BroadcastMessages navigation={navigation} userRole={userRole} />;
         default:
             return <HomeScreen userRole={userRole} navigation={navigation}/>;
     }
