@@ -1,0 +1,70 @@
+Initializing P2P network...
+Initialized with peer ID: 12D3KooWExHyviYAtTbrusei3KjCdkVqhXxK1VkbAZenfX629BoR
+Topic 'general' not found in known topics
+Topic '29BoR' not found in known topics
+Gossip instance initialized
+Listening on [("general", Topic { topic: "general", phantom_data: PhantomData<libp2p_gossipsub::topic::IdentityHash> }), ("29BoR", Topic { topic: "29BoR", phantom_data: PhantomData<libp2p_gossipsub::topic::IdentityHash> })]
+Starting gossip event loop...
+Waiting for peer discovery...
+Local node is listening on /ip4/127.0.0.1/tcp/36557
+Adding peer: 12D3KooWCoZKp6oQ1Sf5HSu3nMaCmNwxhJ2rJzakohSG21nJJAeC
+Adding peer: 12D3KooWCoZKp6oQ1Sf5HSu3nMaCmNwxhJ2rJzakohSG21nJJAeC
+Peer already known: 12D3KooWCoZKp6oQ1Sf5HSu3nMaCmNwxhJ2rJzakohSG21nJJAeC
+Adding peer: 12D3KooWBefubaLnTet4aPQDNgNmk2cpKZ4aY7uQaLkcnrRtJ8dq
+Handling event: NewConnection([PeerId("12D3KooWCoZKp6oQ1Sf5HSu3nMaCmNwxhJ2rJzakohSG21nJJAeC"), PeerId("12D3KooWBefubaLnTet4aPQDNgNmk2cpKZ4aY7uQaLkcnrRtJ8dq")])
+New connection detected to peer(s): [PeerId("12D3KooWCoZKp6oQ1Sf5HSu3nMaCmNwxhJ2rJzakohSG21nJJAeC"), PeerId("12D3KooWBefubaLnTet4aPQDNgNmk2cpKZ4aY7uQaLkcnrRtJ8dq")]
+Adding peer: 12D3KooWBefubaLnTet4aPQDNgNmk2cpKZ4aY7uQaLkcnrRtJ8dq
+Peer already known: 12D3KooWBefubaLnTet4aPQDNgNmk2cpKZ4aY7uQaLkcnrRtJ8dq
+Local node is listening on /ip4/10.0.0.12/tcp/36557
+Local node is listening on /ip4/172.17.0.1/tcp/36557
+Adding peer: 12D3KooWPxE7MRBPjKemSDTHu2Mx73y5fCrSDjj1tCdhSVVPP8aq
+Adding peer: 12D3KooWPxE7MRBPjKemSDTHu2Mx73y5fCrSDjj1tCdhSVVPP8aq
+Peer already known: 12D3KooWPxE7MRBPjKemSDTHu2Mx73y5fCrSDjj1tCdhSVVPP8aq
+Handling event: NewConnection([PeerId("12D3KooWPxE7MRBPjKemSDTHu2Mx73y5fCrSDjj1tCdhSVVPP8aq")])
+New connection detected to peer(s): [PeerId("12D3KooWPxE7MRBPjKemSDTHu2Mx73y5fCrSDjj1tCdhSVVPP8aq")]
+Starting passive listening mode - press Ctrl+C to exit
+Local node is now not listening on /ip4/10.0.0.12/tcp/36557
+Local node is listening on /ip4/10.0.0.12/tcp/36557
+Adding peer: 12D3KooWMUFN9Rv3PHrJzovkiW2YvuEAfaZAZhNwYhhwuQqdqT4p
+Adding peer: 12D3KooWMUFN9Rv3PHrJzovkiW2YvuEAfaZAZhNwYhhwuQqdqT4p
+Peer already known: 12D3KooWMUFN9Rv3PHrJzovkiW2YvuEAfaZAZhNwYhhwuQqdqT4p
+Handling event: NewConnection([PeerId("12D3KooWMUFN9Rv3PHrJzovkiW2YvuEAfaZAZhNwYhhwuQqdqT4p")])
+New connection detected to peer(s): [PeerId("12D3KooWMUFN9Rv3PHrJzovkiW2YvuEAfaZAZhNwYhhwuQqdqT4p")]
+Received message from peer 12D3KooWMUFN9Rv3PHrJzovkiW2YvuEAfaZAZhNwYhhwuQqdqT4p on topic general
+Handling event: Message((MessageData { peer: PeerId("12D3KooWMUFN9Rv3PHrJzovkiW2YvuEAfaZAZhNwYhhwuQqdqT4p"), message: "{\"Message\":{\"message\":\"Hello from FFI test\",\"tags\":\"Normal\",\"timestamp\":1750069605064}}", room: DirectMessage("general") }, Other))
+Received unknown message type, ignoring
+Adding peer: 12D3KooWCw4iQCo5M6Bf7PT5iX5Sd5BstdzsEUzRqzpykW1hCbot
+Adding peer: 12D3KooWCw4iQCo5M6Bf7PT5iX5Sd5BstdzsEUzRqzpykW1hCbot
+Peer already known: 12D3KooWCw4iQCo5M6Bf7PT5iX5Sd5BstdzsEUzRqzpykW1hCbot
+Handling event: NewConnection([PeerId("12D3KooWCw4iQCo5M6Bf7PT5iX5Sd5BstdzsEUzRqzpykW1hCbot")])
+New connection detected to peer(s): [PeerId("12D3KooWCw4iQCo5M6Bf7PT5iX5Sd5BstdzsEUzRqzpykW1hCbot")]
+Adding peer: 12D3KooWNt7vQDzW2fJePzKqvHfZhS3n5apXqRMsYNPrgi23HttP
+Adding peer: 12D3KooWNt7vQDzW2fJePzKqvHfZhS3n5apXqRMsYNPrgi23HttP
+Peer already known: 12D3KooWNt7vQDzW2fJePzKqvHfZhS3n5apXqRMsYNPrgi23HttP
+Handling event: NewConnection([PeerId("12D3KooWNt7vQDzW2fJePzKqvHfZhS3n5apXqRMsYNPrgi23HttP")])
+New connection detected to peer(s): [PeerId("12D3KooWNt7vQDzW2fJePzKqvHfZhS3n5apXqRMsYNPrgi23HttP")]
+Received message from peer 12D3KooWNt7vQDzW2fJePzKqvHfZhS3n5apXqRMsYNPrgi23HttP on topic general
+Handling event: Message((MessageData { peer: PeerId("12D3KooWNt7vQDzW2fJePzKqvHfZhS3n5apXqRMsYNPrgi23HttP"), message: "{\"Message\":{\"message\":\"Hello from FFI test\",\"tags\":\"Normal\",\"timestamp\":1750069632190}}", room: DirectMessage("general") }, Other))
+Received unknown message type, ignoring
+Removing peer: 12D3KooWMUFN9Rv3PHrJzovkiW2YvuEAfaZAZhNwYhhwuQqdqT4p
+Removing peer: 12D3KooWMUFN9Rv3PHrJzovkiW2YvuEAfaZAZhNwYhhwuQqdqT4p
+Handling event: Disconnection([PeerId("12D3KooWMUFN9Rv3PHrJzovkiW2YvuEAfaZAZhNwYhhwuQqdqT4p"), PeerId("12D3KooWMUFN9Rv3PHrJzovkiW2YvuEAfaZAZhNwYhhwuQqdqT4p")])
+Disconnection from peer(s): [PeerId("12D3KooWMUFN9Rv3PHrJzovkiW2YvuEAfaZAZhNwYhhwuQqdqT4p"), PeerId("12D3KooWMUFN9Rv3PHrJzovkiW2YvuEAfaZAZhNwYhhwuQqdqT4p")]
+Removing peer: 12D3KooWCw4iQCo5M6Bf7PT5iX5Sd5BstdzsEUzRqzpykW1hCbot
+Removing peer: 12D3KooWCw4iQCo5M6Bf7PT5iX5Sd5BstdzsEUzRqzpykW1hCbot
+Removing peer: 12D3KooWNt7vQDzW2fJePzKqvHfZhS3n5apXqRMsYNPrgi23HttP
+Removing peer: 12D3KooWNt7vQDzW2fJePzKqvHfZhS3n5apXqRMsYNPrgi23HttP
+Handling event: Disconnection([PeerId("12D3KooWCw4iQCo5M6Bf7PT5iX5Sd5BstdzsEUzRqzpykW1hCbot"), PeerId("12D3KooWCw4iQCo5M6Bf7PT5iX5Sd5BstdzsEUzRqzpykW1hCbot"), PeerId("12D3KooWNt7vQDzW2fJePzKqvHfZhS3n5apXqRMsYNPrgi23HttP"), PeerId("12D3KooWNt7vQDzW2fJePzKqvHfZhS3n5apXqRMsYNPrgi23HttP")])
+Disconnection from peer(s): [PeerId("12D3KooWCw4iQCo5M6Bf7PT5iX5Sd5BstdzsEUzRqzpykW1hCbot"), PeerId("12D3KooWCw4iQCo5M6Bf7PT5iX5Sd5BstdzsEUzRqzpykW1hCbot"), PeerId("12D3KooWNt7vQDzW2fJePzKqvHfZhS3n5apXqRMsYNPrgi23HttP"), PeerId("12D3KooWNt7vQDzW2fJePzKqvHfZhS3n5apXqRMsYNPrgi23HttP")]
+Adding peer: 12D3KooWQoCBk3TL9KU3GCCcHZH12WSm7qB4ezZ3apzBxa4CQjW8
+Adding peer: 12D3KooWQoCBk3TL9KU3GCCcHZH12WSm7qB4ezZ3apzBxa4CQjW8
+Peer already known: 12D3KooWQoCBk3TL9KU3GCCcHZH12WSm7qB4ezZ3apzBxa4CQjW8
+Handling event: NewConnection([PeerId("12D3KooWQoCBk3TL9KU3GCCcHZH12WSm7qB4ezZ3apzBxa4CQjW8")])
+New connection detected to peer(s): [PeerId("12D3KooWQoCBk3TL9KU3GCCcHZH12WSm7qB4ezZ3apzBxa4CQjW8")]
+Received message from peer 12D3KooWQoCBk3TL9KU3GCCcHZH12WSm7qB4ezZ3apzBxa4CQjW8 on topic general
+Handling event: Message((MessageData { peer: PeerId("12D3KooWQoCBk3TL9KU3GCCcHZH12WSm7qB4ezZ3apzBxa4CQjW8"), message: "{\"Message\":{\"message\":\"Hello from FFI test\",\"tags\":\"Normal\",\"timestamp\":1750070272303}}", room: DirectMessage("general") }, Other))
+Received unknown message type, ignoring
+Removing peer: 12D3KooWQoCBk3TL9KU3GCCcHZH12WSm7qB4ezZ3apzBxa4CQjW8
+Removing peer: 12D3KooWQoCBk3TL9KU3GCCcHZH12WSm7qB4ezZ3apzBxa4CQjW8
+Handling event: Disconnection([PeerId("12D3KooWQoCBk3TL9KU3GCCcHZH12WSm7qB4ezZ3apzBxa4CQjW8"), PeerId("12D3KooWQoCBk3TL9KU3GCCcHZH12WSm7qB4ezZ3apzBxa4CQjW8")])
+Disconnection from peer(s): [PeerId("12D3KooWQoCBk3TL9KU3GCCcHZH12WSm7qB4ezZ3apzBxa4CQjW8"), PeerId("12D3KooWQoCBk3TL9KU3GCCcHZH12WSm7qB4ezZ3apzBxa4CQjW8")]

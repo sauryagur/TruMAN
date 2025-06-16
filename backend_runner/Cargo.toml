@@ -5,3 +5,13 @@ edition = "2024"
 
 [dependencies]
 backend = { path = "../backend" }
+bs58 = "0.5.0"
+libp2p = { version = "0.53", features = ["tcp", "noise", "identify", "gossipsub", "mdns", "ping", "macros"] }
+
+[[bin]]
+name = "backend_runner"
+path = "src/main.rs"
+
+[[bin]]
+name = "ffi_test"
+path = "src/ffi_test.rs"

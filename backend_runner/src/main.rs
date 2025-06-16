@@ -1,6 +1,7 @@
 use backend::*;
 use backend::ffi::FFIList;
 use std::io::{self, BufRead};
+use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;

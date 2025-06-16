@@ -73,7 +73,7 @@ pub extern "C" fn init(whitelist_ptr: *mut *mut u8, whitelist_sizes_ptr: *mut us
     }
 }
 
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub extern "C" fn start_gossip_loop() {
     println!("Starting gossip event loop...");
     RUNTIME.spawn(async {
@@ -110,7 +110,7 @@ pub extern "C" fn start_gossip_loop() {
     });
 }
 
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub extern "C" fn collect_events() -> FFIList {
     match std::panic::catch_unwind(|| {
         RUNTIME.block_on(async {
@@ -159,7 +159,7 @@ pub extern "C" fn collect_events() -> FFIList {
     }
 }
 
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub extern "C" fn ping(target: *const u8, target_size: usize) -> i32 {
     match std::panic::catch_unwind(|| {
         // Safely get the target PeerId from bytes
@@ -272,7 +272,7 @@ pub extern "C" fn ping_test() {
     })
 }
 
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub extern "C" fn broadcast_message(message: *mut u8, message_size: usize, tag: *const u8, tag_size: usize) -> i32 {
     match std::panic::catch_unwind(|| {
         RUNTIME.block_on(async {
@@ -334,7 +334,7 @@ pub extern "C" fn broadcast_message(message: *mut u8, message_size: usize, tag: 
     }
 }
 
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub extern "C" fn new_wolf(
     new_wolf_peer_id: *const u8,
     new_wolf_peer_id_size: usize,
@@ -406,7 +406,7 @@ pub extern "C" fn new_wolf(
     }
 }
 
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub extern "C" fn get_local_peer_id() -> FFIList {
     match std::panic::catch_unwind(|| {
         RUNTIME.block_on(async {
@@ -418,16 +418,13 @@ pub extern "C" fn get_local_peer_id() -> FFIList {
             
             // Get the local peer ID
             let peer_id = gossip.peer_id().to_string();
-            println!("Local peer ID: {}", peer_id);
+            let strings = vec![peer_id];
             
-            // Create a vector with just the peer ID
-            let peer_ids = vec![peer_id];
+            // Create FFIList for return
+            let result = FFIList::from_vec(&strings);
             
-            // Convert to FFIList
-            let result = FFIList::from_vec(&peer_ids);
-            
-            // Make sure the vector isn't dropped (which would free the memory)
-            std::mem::forget(peer_ids);
+            // Important: forget the original strings to prevent deallocation
+            std::mem::forget(strings);
             
             result
         })
@@ -440,7 +437,7 @@ pub extern "C" fn get_local_peer_id() -> FFIList {
     }
 }
 
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub extern "C" fn cleanup() {
     RUNTIME.block_on(async {
         println!("Cleaning up resources");
@@ -449,7 +446,7 @@ pub extern "C" fn cleanup() {
     });
 }
 
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub extern "C" fn get_peers() -> FFIList {
     match std::panic::catch_unwind(|| {
         RUNTIME.block_on(async {

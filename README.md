@@ -180,11 +180,70 @@ cargo run
 # Observe peer discovery and messaging between instances
 ```
 
+## Testing FFI Integration
+
+To test the FFI (Foreign Function Interface) that connects the backend to the frontend:
+
+```bash
+# Run the FFI integration test
+cd TruMAN
+cargo run --bin ffi_test
+```
+
+The FFI test verifies that all backend functionality is properly exposed through the C-compatible interface:
+
+1. Initialize the backend
+2. Start the gossip loop
+3. Get local peer ID
+4. Discover peers
+5. Broadcast messages
+6. Collect events
+7. Clean up resources
+
+If you encounter segmentation faults or other memory issues, run the fix_ffi.sh script to update FFI declarations:
+
+```bash
+./fix_ffi.sh
+```
+
+### Manual FFI Testing
+
+For debugging specific FFI functions:
+
+```bash
+# Build the backend library
+cd TruMAN/backend
+cargo build
+
+# Verify the shared library exists
+ls -la ../target/debug/libbackend.so
+
+# Use the backend_runner demo tool with real FFI calls
+cd ../backend_runner
+cargo run
+```
+
+### JavaScript FFI Testing
+
+To test the FFI integration from JavaScript (Node.js):
+
+```bash
+# Install required Node.js packages
+npm install ffi-napi ref-napi ref-array-napi ref-struct-napi
+
+# Run the JavaScript FFI test
+node ffi_test.js
+```
+
+Note: The JavaScript FFI test requires a compatible Node.js version with the ffi-napi module. If you encounter issues, try using Node.js v16.x.
+
 ## License
 
 [MIT License](LICENSE)
 
 ## Contributors
-
-- [Your Name]
-- [Other Contributors]
+ - Aargh Rai
+ - Saurya Gur
+ - Jaiveer Singh
+ - Baltej Singh
+ - Yashraj Singh Pahwa

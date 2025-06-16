@@ -47,23 +47,34 @@ impl FFIList {
     }
 
     pub fn from_vec(data: &Vec<String>) -> Self {
-        let mut string_sizes: Vec<usize> = vec![0; data.len()];
-        let mut strings: Vec<*mut u8> = vec![std::ptr::null_mut(); data.len()];
-
-        for (i, item) in data.iter().enumerate() {
-            let cstr = std::ffi::CString::new(item.clone()).unwrap();
-            string_sizes[i] = item.len();
-            strings[i] = cstr.into_raw() as *mut u8;
+        if data.is_empty() {
+            return Self::null();
         }
-        strings.push(std::ptr::null_mut()); // Null-terminate the array
-
-        let ptr = strings.as_mut_ptr();
-        let sizes_ptr = string_sizes.as_mut_ptr();
-
-        Self {
-            ptr,
-            sizes_ptr,
-            size: data.len(),
+        
+        unsafe {
+            // Allocate memory for string pointers and sizes
+            let ptr = libc::malloc(data.len() * std::mem::size_of::<*mut u8>()) as *mut *mut u8;
+            let sizes_ptr = libc::malloc(data.len() * std::mem::size_of::<usize>()) as *mut usize;
+            
+            // Copy each string
+            for (i, s) in data.iter().enumerate() {
+                let bytes = s.as_bytes();
+                let len = bytes.len();
+                
+                // Allocate memory for string content
+                let str_ptr = libc::malloc(len) as *mut u8;
+                std::ptr::copy_nonoverlapping(bytes.as_ptr(), str_ptr, len);
+                
+                // Set pointers and sizes
+                *ptr.add(i) = str_ptr;
+                *sizes_ptr.add(i) = len;
+            }
+            
+            Self {
+                ptr,
+                sizes_ptr,
+                size: data.len(),
+            }
         }
     }
     pub fn spread(&self) -> (*mut *mut u8, *mut usize, usize) {
