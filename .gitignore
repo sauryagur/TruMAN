@@ -1,4 +1,33 @@
 target/
 
-# for non jetbrains users
+# IDEs and editors
 .idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.rlib
+*.exe
+*.pdb
+
+# Logs and debugging
+*.log
+*.bak
+backend/src/*.bak
+.cargo-lock
+CACHEDIR.TAG
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+.yarn-integrity
