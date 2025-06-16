@@ -18,6 +18,49 @@ export enum EventType {
   DISCONNECTION = 'disconnection',
 }
 
+// Environment configuration
+export enum Environment {
+  DEVELOPMENT = 'development',
+  PRODUCTION = 'production',
+}
+
+// Current environment
+const ENV: Environment = __DEV__ ? Environment.DEVELOPMENT : Environment.PRODUCTION;
+
+// Config based on environment
+const CONFIG = {
+  [Environment.DEVELOPMENT]: {
+    useNativePlatform: false,
+    pingTimeout: 3000,  // 3 seconds timeout for pings in dev
+    collectEventsInterval: 2000, // 2 seconds for event polling
+    logEvents: true,
+  },
+  [Environment.PRODUCTION]: {
+    useNativePlatform: true,
+    pingTimeout: 5000, // 5 seconds timeout for production
+    collectEventsInterval: 1000, // 1 second for event polling
+    logEvents: false,
+  }
+};
+
+// App configuration
+const appConfig = CONFIG[ENV];
+
+// Whether to use native platform implementation
+const isNativePlatform = appConfig.useNativePlatform;
+
+// Logger with environment awareness
+const logger = {
+  log: (...args: any[]) => {
+    if (appConfig.logEvents) {
+      console.log('[Backend]', ...args);
+    }
+  },
+  error: (...args: any[]) => {
+    console.error('[Backend Error]', ...args);
+  }
+};
+
 export interface PeerEvent {
   type: EventType;
   peerId: string;
@@ -35,7 +78,7 @@ const SUCCESS = 1;
 const ERROR = 0;
 
 // Mock implementation for development/web
-const isNativePlatform = false; // Set to true when actual native code is available
+// const isNativePlatform = false; // Set to true when actual native code is available
 
 // Mock data for development
 const mockPeers = [
@@ -112,7 +155,7 @@ function generateRandomEvent() {
  */
 export function initNetwork(whitelist: string[] = []): boolean {
   if (!isNativePlatform) {
-    console.log('[Backend] Initializing P2P network with whitelist:', whitelist);
+    logger.log('Initializing P2P network with whitelist:', whitelist);
     return true;
   }
   
@@ -126,7 +169,7 @@ export function initNetwork(whitelist: string[] = []): boolean {
  */
 export function startGossipLoop(): void {
   if (!isNativePlatform) {
-    console.log('[Backend] Starting gossip loop');
+    logger.log('Starting gossip loop');
     // Start generating random events in development mode
     setInterval(generateRandomEvent, 1000);
     return;
@@ -154,17 +197,32 @@ export function collectEvents(): string[] {
 }
 
 /**
- * Sends a ping to a specific peer
+ * Sends a ping to a specific peer and returns the response time
  */
-export function pingPeer(peerId: string): boolean {
+export function pingPeer(peerId: string): number {
+  const startTime = performance.now();
+  
   if (!isNativePlatform) {
-    console.log('[Backend] Pinging peer:', peerId);
-    return true;
+    logger.log('Pinging peer:', peerId);
+    // Simulate network latency with some realistic variation
+    const baseLatency = pingResponseTimes[peerId] || (50 + Math.random() * 100);
+    const jitter = Math.random() * 20 - 10; // +/- 10ms jitter
+    const responseTime = Math.max(5, Math.floor(baseLatency + jitter));
+    
+    // Cache the response time
+    pingResponseTimes[peerId] = responseTime;
+    
+    return responseTime;
   }
   
   // When native code is available:
-  // return NativeModules.TrumanBackend.ping(peerId) === SUCCESS;
-  return true;
+  // const success = NativeModules.TrumanBackend.ping(peerId) === SUCCESS;
+  // const endTime = performance.now();
+  // return success ? Math.floor(endTime - startTime) : -1;
+  
+  // Simulate a response time for now
+  const endTime = performance.now();
+  return Math.floor(endTime - startTime + (Math.random() * 50) + 20);
 }
 
 /**
@@ -187,7 +245,7 @@ export function getPeers(): string[] {
  */
 export function broadcastMessage(message: string, tag: string = 'general'): boolean {
   if (!isNativePlatform) {
-    console.log('[Backend] Broadcasting message:', message, 'with tag:', tag);
+    logger.log('Broadcasting message:', message, 'with tag:', tag);
     // In development mode, add the broadcast to our own message queue
     const event = JSON.stringify({
       type: 'message',
@@ -213,7 +271,7 @@ export function broadcastMessage(message: string, tag: string = 'general'): bool
  */
 export function promoteToWolf(peerId: string): boolean {
   if (!isNativePlatform) {
-    console.log('[Backend] Promoting peer to wolf:', peerId);
+    logger.log('Promoting peer to wolf:', peerId);
     return true;
   }
   
@@ -242,7 +300,7 @@ export function getLocalPeerId(): string {
  */
 export function cleanup(): void {
   if (!isNativePlatform) {
-    console.log('[Backend] Cleaning up resources');
+    logger.log('Cleaning up resources');
     return;
   }
   

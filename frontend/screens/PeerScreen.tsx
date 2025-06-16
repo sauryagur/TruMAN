@@ -58,19 +58,19 @@ const PeerScreen: React.FC<PeerScreenProps> = ({ navigation, userRole = 'sheep' 
     // Determine accent color based on user role
     const accentColor = userRole === 'wolf' ? '#e74c3c' : '#4A90E2'; // Red for wolf, blue for sheep
 
-    // Fetch peers on component mount
+    // Fetch peers on component mount - but don't poll
     useEffect(() => {
         const fetchPeers = () => {
             try {
                 const peerIds = backendService.getPeers();
                 const newPeers = peerIds.map(id => ({
                     id,
-                    responseTime: Math.floor(Math.random() * 800) + 50, // Random response time for demo
+                    responseTime: 0, // Initialize with 0, will be updated on ping
                     isOnline: true
                 }));
                 setPeers(newPeers);
                 setTotalPeers(peerIds.length);
-                setNetworkSpeed(Math.floor(Math.random() * 200) + 150); // Simulate network speed
+                // Network speed will be calculated based on actual pings
             } catch (error) {
                 console.error('Failed to fetch peers:', error);
             }
@@ -78,9 +78,7 @@ const PeerScreen: React.FC<PeerScreenProps> = ({ navigation, userRole = 'sheep' 
         
         fetchPeers();
         
-        // Refresh peers every 5 seconds
-        const interval = setInterval(fetchPeers, 5000);
-        return () => clearInterval(interval);
+        // No interval polling - fetch peers once on mount
     }, []);
 
     // Filter peers based on search query
@@ -93,20 +91,38 @@ const PeerScreen: React.FC<PeerScreenProps> = ({ navigation, userRole = 'sheep' 
 
     // Handle ping for a specific peer
     const handlePing = (peerId: string) => {
-        Alert.alert('Ping', `Pinging peer ${peerId}...`);
-        
         try {
-            const success = backendService.pingPeer(peerId);
-            if (success) {
-                // Update the response time for this peer (simulated for demo)
+            // Show a small notification that we're pinging
+            Alert.alert('Ping', `Pinging peer ${peerId}...`);
+            
+            // Get the actual response time from the backend
+            const responseTime = backendService.pingPeer(peerId);
+            
+            if (responseTime >= 0) {
+                // Update the response time for this peer with the actual value
                 setPeers(prevPeers => 
                     prevPeers.map(peer => 
                         peer.id === peerId 
-                            ? { ...peer, responseTime: Math.floor(Math.random() * 200) + 50 } 
+                            ? { ...peer, responseTime: responseTime } 
                             : peer
                     )
                 );
+                
+                // Update network speed calculation based on response time
+                // Lower response time = higher network speed
+                if (responseTime > 0) {
+                    const calculatedSpeed = Math.floor(1000 / responseTime * 100);
+                    setNetworkSpeed(calculatedSpeed);
+                }
             } else {
+                // Negative response time indicates failure
+                setPeers(prevPeers => 
+                    prevPeers.map(peer => 
+                        peer.id === peerId 
+                            ? { ...peer, isOnline: false } 
+                            : peer
+                    )
+                );
                 Alert.alert('Error', 'Failed to ping peer');
             }
         } catch (error) {
@@ -119,13 +135,40 @@ const PeerScreen: React.FC<PeerScreenProps> = ({ navigation, userRole = 'sheep' 
     const handlePingAllPeers = () => {
         Alert.alert('Ping All', 'Pinging all connected peers...');
         
-        // For demo purposes, just update all response times
-        setPeers(prevPeers => 
-            prevPeers.map(peer => ({ 
-                ...peer, 
-                responseTime: Math.floor(Math.random() * 200) + 50 
-            }))
-        );
+        // Ping each peer and update their response times
+        const updatedPeers = [...peers];
+        let totalResponseTime = 0;
+        let respondedPeers = 0;
+        
+        // Create a copy of peers to work with
+        peers.forEach((peer, index) => {
+            const responseTime = backendService.pingPeer(peer.id);
+            
+            if (responseTime >= 0) {
+                updatedPeers[index] = {
+                    ...peer,
+                    responseTime,
+                    isOnline: true
+                };
+                totalResponseTime += responseTime;
+                respondedPeers++;
+            } else {
+                updatedPeers[index] = {
+                    ...peer,
+                    isOnline: false
+                };
+            }
+        });
+        
+        // Update all peers at once
+        setPeers(updatedPeers);
+        
+        // Calculate average network speed based on all pings
+        if (respondedPeers > 0) {
+            const avgResponseTime = totalResponseTime / respondedPeers;
+            const calculatedSpeed = Math.floor(1000 / avgResponseTime * 100);
+            setNetworkSpeed(calculatedSpeed);
+        }
     };
 
     const renderPeerItem = ({ item }: { item: PeerNode }) => (
