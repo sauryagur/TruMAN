@@ -7,6 +7,7 @@ import {
     StatusBar,
     TouchableOpacity,
     TextInput,
+    ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -45,76 +46,82 @@ const BroadcastMessages: React.FC<BroadcastMessagesProps> = ({ navigation, userR
                 <Text style={styles.subtitle}>Send messages to the network</Text>
             </View>
 
-            <View style={styles.content}>
-                {/* Compose Messages Section */}
-                <View style={styles.composeSection}>
-                    <Text style={styles.sectionTitle}>Compose Messages</Text>
-                    
-                    {/* Priority Selection */}
-                    <View style={styles.priorityContainer}>
-                        {(['Critical', 'High', 'Normal'] as MessagePriority[]).map((priority) => (
-                            <TouchableOpacity
-                                key={priority}
-                                style={[
-                                    styles.priorityButton,
-                                    selectedPriority === priority && {
-                                        backgroundColor: priorityColors[priority],
-                                        borderColor: priorityColors[priority],
-                                    }
-                                ]}
-                                onPress={() => setSelectedPriority(priority)}
-                            >
-                                <Text style={[
-                                    styles.priorityButtonText,
-                                    selectedPriority === priority && styles.priorityButtonTextActive
-                                ]}>
-                                    {priority}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
+            <ScrollView 
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={true}
+            >
+                <View style={styles.content}>
+                    {/* Compose Messages Section */}
+                    <View style={styles.composeSection}>
+                        <Text style={styles.sectionTitle}>Compose Messages</Text>
+                        
+                        {/* Priority Selection */}
+                        <View style={styles.priorityContainer}>
+                            {(['Critical', 'High', 'Normal'] as MessagePriority[]).map((priority) => (
+                                <TouchableOpacity
+                                    key={priority}
+                                    style={[
+                                        styles.priorityButton,
+                                        selectedPriority === priority && {
+                                            backgroundColor: priorityColors[priority],
+                                            borderColor: priorityColors[priority],
+                                        }
+                                    ]}
+                                    onPress={() => setSelectedPriority(priority)}
+                                >
+                                    <Text style={[
+                                        styles.priorityButtonText,
+                                        selectedPriority === priority && styles.priorityButtonTextActive
+                                    ]}>
+                                        {priority}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        {/* Message Input */}
+                        <TextInput
+                            style={styles.messageInput}
+                            multiline
+                            numberOfLines={4}
+                            placeholder="Enter emergency message..."
+                            placeholderTextColor="#666"
+                            value={messageText}
+                            onChangeText={setMessageText}
+                            textAlignVertical="top"
+                        />
+
+                        {/* Broadcast Button */}
+                        <TouchableOpacity 
+                            style={[
+                                styles.broadcastButton,
+                                !messageText.trim() && styles.broadcastButtonDisabled
+                            ]}
+                            onPress={handleBroadcast}
+                            disabled={!messageText.trim()}
+                        >
+                            <Text style={styles.broadcastButtonText}>Broadcast Message</Text>
+                        </TouchableOpacity>
                     </View>
 
-                    {/* Message Input */}
-                    <TextInput
-                        style={styles.messageInput}
-                        multiline
-                        numberOfLines={4}
-                        placeholder="Enter emergency message..."
-                        placeholderTextColor="#666"
-                        value={messageText}
-                        onChangeText={setMessageText}
-                        textAlignVertical="top"
-                    />
-
-                    {/* Broadcast Button */}
-                    <TouchableOpacity 
-                        style={[
-                            styles.broadcastButton,
-                            !messageText.trim() && styles.broadcastButtonDisabled
-                        ]}
-                        onPress={handleBroadcast}
-                        disabled={!messageText.trim()}
-                    >
-                        <Text style={styles.broadcastButtonText}>Broadcast Message</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Network Status Section */}
-                <View style={styles.statusSection}>
-                    <View style={styles.statusRow}>
-                        <Text style={styles.statusLabel}>Network Status</Text>
-                        <View style={styles.statusIndicator}>
-                            <View style={styles.onlineIndicator} />
-                            <Text style={styles.statusValue}>Online</Text>
+                    {/* Network Status Section */}
+                    <View style={styles.statusSection}>
+                        <View style={styles.statusRow}>
+                            <Text style={styles.statusLabel}>Network Status</Text>
+                            <View style={styles.statusIndicator}>
+                                <View style={styles.onlineIndicator} />
+                                <Text style={styles.statusValue}>Online</Text>
+                            </View>
+                        </View>
+                        
+                        <View style={styles.statusRow}>
+                            <Text style={styles.statusLabel}>Network Strength</Text>
+                            <Text style={styles.statusValue}>250 kbps</Text>
                         </View>
                     </View>
-                    
-                    <View style={styles.statusRow}>
-                        <Text style={styles.statusLabel}>Network Strength</Text>
-                        <Text style={styles.statusValue}>250 kbps</Text>
-                    </View>
                 </View>
-            </View>
+            </ScrollView>
         </SafeAreaView>
     );
 };
@@ -141,8 +148,13 @@ const styles = StyleSheet.create({
         color: '#cccccc',
         textAlign: 'center',
     },
-    content: {
+    scrollView: {
         flex: 1,
+    },
+    scrollContent: {
+        paddingBottom: 20,
+    },
+    content: {
         paddingHorizontal: 20,
     },
     composeSection: {
