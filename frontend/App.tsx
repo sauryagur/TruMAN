@@ -5,6 +5,7 @@ import HomeScreen from './screens/HomeScreen';
 import AdminNewWolf from './screens/AdminNewWolf';
 import PeerScreen from './screens/PeerScreen';
 import MessagesScreen from "./screens/MessagesScreen"; // Import PeerScreen
+import backendService from './services/backend';
 
 type UserRole = 'sheep' | 'wolf';
 // Define all possible screens in your application for navigation
@@ -14,6 +15,19 @@ export default function App() {
     const [userRole, setUserRole] = useState<UserRole>('sheep');
     const [currentScreen, setCurrentScreen] = useState<ScreenName>('home'); // Use ScreenName type
     const fadeAnim = useRef(new Animated.Value(1)).current; // Initial value for opacity: 1 (fully visible)
+
+    // Initialize backend when app starts
+    useEffect(() => {
+        console.log('Initializing TruMAN backend...');
+        backendService.initNetwork();
+        backendService.startGossipLoop();
+        
+        // Cleanup when component unmounts
+        return () => {
+            console.log('Cleaning up TruMAN backend...');
+            backendService.cleanup();
+        };
+    }, []);
 
     // Navigation object to be passed down to child components
     const navigation = {
@@ -62,26 +76,25 @@ export default function App() {
         ).start();
     }, [currentScreen]); // Rerun when currentScreen changes
 
-// ...existing code...
-const toggleUserRole = () => {
-    // First change the role without any animation
-    setUserRole(prevRole => prevRole === 'sheep' ? 'wolf' : 'sheep');
-    
-    // If we're not already on home screen, navigate there with animation
-    if (currentScreen !== 'home') {
-        Animated.timing(
-            fadeAnim,
-            {
-                toValue: 0,
-                duration: 200,
-                useNativeDriver: true,
-            }
-        ).start(() => {
-            setCurrentScreen('home');
-        });
-    }
-};
-// ...existing code...
+    const toggleUserRole = () => {
+        // First change the role without any animation
+        setUserRole(prevRole => prevRole === 'sheep' ? 'wolf' : 'sheep');
+        
+        // If we're not already on home screen, navigate there with animation
+        if (currentScreen !== 'home') {
+            Animated.timing(
+                fadeAnim,
+                {
+                    toValue: 0,
+                    duration: 200,
+                    useNativeDriver: true,
+                }
+            ).start(() => {
+                setCurrentScreen('home');
+            });
+        }
+    };
+
     const navigateToAdminPanel = () => {
         if (userRole === 'wolf' && currentScreen !== 'admin') { // Add check to prevent navigating to same screen
             Animated.timing(

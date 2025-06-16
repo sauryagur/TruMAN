@@ -198,7 +198,13 @@ const MessagesScreen: React.FC<MessagesScreenProps> = ({ navigation, userRole = 
                     multiline
                 />
                 <View style={styles.messageInputActions}>
-                    <TouchableOpacity onPress={toggleCategory} style={styles.categoryToggle}>
+                    <TouchableOpacity 
+                        onPress={toggleCategory} 
+                        style={[
+                            styles.categoryToggle,
+                            { backgroundColor: accentColor }
+                        ]}
+                    >
                         <Text style={styles.categoryToggleText}>{messageCategory}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
@@ -328,7 +334,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     categoryToggle: {
-        backgroundColor: accentColor,
         borderRadius: 8,
         paddingVertical: 8,
         paddingHorizontal: 12,

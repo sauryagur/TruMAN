@@ -37,6 +37,76 @@ const ERROR = 0;
 // Mock implementation for development/web
 const isNativePlatform = false; // Set to true when actual native code is available
 
+// Mock data for development
+const mockPeers = [
+  '12D3KooWJWEKvMzPCXtZKZkBQmgFWAyYx9d7ex5GeFu9MVqpQ9ps',
+  '12D3KooWHFrmLWTTDD4NodngtRUdstGVxQmqLxZXkVFVnXoGnBP8',
+  '12D3KooWAYdJSNxaH4sP6NqfEYkGrArVMMCvzMXTL7jQaHxitEqK',
+  '12D3KooWFHJUzUMgxWVvsxSeYUxZ5jcSeLxUDJ1tZqS36GJN5n5V',
+  '12D3KooWRusoAhqQV6PadmALLD3wZkuEB5MsNwrrFNJh7KfMgpKU',
+];
+
+const mockLocalPeerId = '12D3KooWGG3MAbjhL9NrR9LokpcD3jzHx7NRUHKqcM7orrXtpYvT';
+
+// Simulated message queue for mock implementation
+let mockMessageQueue: string[] = [];
+
+// Time of last generated event
+let lastEventTime = Date.now();
+
+// Generate a random event periodically
+function generateRandomEvent() {
+  const now = Date.now();
+  
+  // Only generate events every 10-20 seconds to avoid spamming
+  if (now - lastEventTime < 10000 + Math.random() * 10000) {
+    return;
+  }
+  
+  const eventType = Math.random() > 0.7 ? 'message' : 'connection';
+  
+  if (eventType === 'message') {
+    const randomPeer = mockPeers[Math.floor(Math.random() * mockPeers.length)];
+    const messages = [
+      "All clear in my area, continuing patrols.",
+      "Need assistance in sector 7G, unusual activity spotted.",
+      "EMERGENCY: Fire reported in building at coordinates 32.4N, 17.8E!",
+      "Weather conditions deteriorating rapidly in western region.",
+      "Supply convoy arrived safely at northern outpost.",
+      "Communication systems experiencing intermittent failures.",
+      "Suspicious individuals spotted near the perimeter fence."
+    ];
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+    const tags = ['general', 'general', 'general', 'important', 'important', 'emergency'];
+    const randomTag = tags[Math.floor(Math.random() * tags.length)];
+    
+    const event = JSON.stringify({
+      type: 'message',
+      data: {
+        peer: randomPeer,
+        message: {
+          message: randomMessage,
+          tags: randomTag
+        }
+      }
+    });
+    
+    mockMessageQueue.push(event);
+  } else {
+    const randomPeer = mockPeers[Math.floor(Math.random() * mockPeers.length)];
+    const event = JSON.stringify({
+      type: 'connection',
+      data: {
+        peer: randomPeer
+      }
+    });
+    
+    mockMessageQueue.push(event);
+  }
+  
+  lastEventTime = now;
+}
+
 /**
  * Initializes the P2P network with an optional whitelist
  */
@@ -57,6 +127,8 @@ export function initNetwork(whitelist: string[] = []): boolean {
 export function startGossipLoop(): void {
   if (!isNativePlatform) {
     console.log('[Backend] Starting gossip loop');
+    // Start generating random events in development mode
+    setInterval(generateRandomEvent, 1000);
     return;
   }
   
@@ -70,7 +142,9 @@ export function startGossipLoop(): void {
 export function collectEvents(): string[] {
   if (!isNativePlatform) {
     // Return mock events during development
-    return [];
+    const events = [...mockMessageQueue];
+    mockMessageQueue = []; // Clear the queue after returning events
+    return events;
   }
   
   // When native code is available:
@@ -99,11 +173,7 @@ export function pingPeer(peerId: string): boolean {
 export function getPeers(): string[] {
   if (!isNativePlatform) {
     // Return mock peers during development
-    return [
-      '12D3KooWJWEKvMzPCXtZKZkBQmgFWAyYx9d7ex5GeFu9MVqpQ9ps',
-      '12D3KooWHFrmLWTTDD4NodngtRUdstGVxQmqLxZXkVFVnXoGnBP8',
-      '12D3KooWAYdJSNxaH4sP6NqfEYkGrArVMMCvzMXTL7jQaHxitEqK'
-    ];
+    return mockPeers;
   }
   
   // When native code is available:
@@ -118,6 +188,18 @@ export function getPeers(): string[] {
 export function broadcastMessage(message: string, tag: string = 'general'): boolean {
   if (!isNativePlatform) {
     console.log('[Backend] Broadcasting message:', message, 'with tag:', tag);
+    // In development mode, add the broadcast to our own message queue
+    const event = JSON.stringify({
+      type: 'message',
+      data: {
+        peer: mockLocalPeerId,
+        message: {
+          message: message,
+          tags: tag
+        }
+      }
+    });
+    mockMessageQueue.push(event);
     return true;
   }
   
@@ -146,7 +228,7 @@ export function promoteToWolf(peerId: string): boolean {
 export function getLocalPeerId(): string {
   if (!isNativePlatform) {
     // Return mock ID during development
-    return '12D3KooWGG3MAbjhL9NrR9LokpcD3jzHx7NRUHKqcM7orrXtpYvT';
+    return mockLocalPeerId;
   }
   
   // When native code is available:

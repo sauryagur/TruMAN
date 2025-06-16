@@ -58,7 +58,8 @@ cd "$SCRIPT_DIR"
 # Clean if requested
 if [[ "$CLEAN" == "true" ]]; then
   echo "Cleaning build artifacts..."
-  cargo clean
+  cd "$SCRIPT_DIR/backend" && cargo clean
+  cd "$SCRIPT_DIR/backend_runner" && cargo clean
 fi
 
 # Fix FFI attributes if needed
@@ -70,7 +71,8 @@ fi
 
 # Build the project
 echo "Building TruMAN..."
-cargo build
+cd "$SCRIPT_DIR/backend" && cargo build
+cd "$SCRIPT_DIR/backend_runner" && cargo build
 
 # Run FFI test if requested
 if [[ "$RUN_FFI" == "true" ]]; then
