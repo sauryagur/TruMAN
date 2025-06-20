@@ -1,4 +1,0 @@
-namespace backend {
-  [Async]
-  string say_after(u64 ms, string who);
-};

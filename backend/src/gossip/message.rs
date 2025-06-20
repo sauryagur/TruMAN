@@ -4,7 +4,7 @@ use super::{
     GenerateRoomName, Gossip,
     room::{GossipRooms, Room},
 };
-use crate::communication::InteractionMessage;
+use crate::{communication::InteractionMessage, log};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MessageData {
@@ -17,7 +17,7 @@ impl MessageData {
     pub fn reply_to_peer(&self, gossip: &mut Gossip, message: &InteractionMessage) -> Result<(), Box<dyn std::error::Error>> {
         // Check if we have the peer in our known peers
         if !gossip.peer_ids.contains(&self.peer) {
-            println!("Warning: Trying to reply to unknown peer {}", self.peer);
+            log!("Warning: Trying to reply to unknown peer {}", self.peer);
             // Continue anyway as the peer might be known at a lower level
         }
         
@@ -32,11 +32,11 @@ impl MessageData {
         match gossip.gossip(message, room_name) {
             Ok(_) => Ok(()),
             Err(e) => {
-                println!("Error sending message response: {:?}", e);
+                log!("Error sending message response: {:?}", e);
                 
                 // For InsufficientPeers, log but don't treat as fatal
                 if let super::GossipSendError::PublishError(libp2p::gossipsub::PublishError::InsufficientPeers) = e {
-                    println!("Not enough peers connected yet to send reply");
+                    log!("Not enough peers connected yet to send reply");
                     return Ok(());
                 }
                 
@@ -54,11 +54,11 @@ impl MessageData {
         match gossip.gossip(message, topic) {
             Ok(_) => Ok(()),
             Err(e) => {
-                println!("Error sending message to room: {:?}", e);
+                log!("Error sending message to room: {:?}", e);
                 
                 // For InsufficientPeers, log but don't treat as fatal
                 if let super::GossipSendError::PublishError(libp2p::gossipsub::PublishError::InsufficientPeers) = e {
-                    println!("Not enough peers connected yet to send to room");
+                    log!("Not enough peers connected yet to send to room");
                     return Ok(());
                 }
                 

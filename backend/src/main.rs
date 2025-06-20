@@ -106,6 +106,7 @@ fn main() {
     
     let stdin = io::stdin();
     for line in stdin.lock().lines() {
+        println!("GOT SHIT: {}", line.as_ref().unwrap());
         match line.unwrap().trim() {
             "1" => {
                 println!("Enter message content:");

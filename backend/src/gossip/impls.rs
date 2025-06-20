@@ -7,6 +7,7 @@ use libp2p::swarm::SwarmEvent;
 use libp2p::{PeerId, gossipsub::IdentTopic};
 
 use crate::communication::{GetDataViaMessageError, InteractionMessage};
+use crate::log;
 
 use super::events::EventHandler;
 use super::message::MessageData;
@@ -24,20 +25,20 @@ impl GossipRooms for Gossip {
         // First check if we already have this topic
         for (room_name, room) in self.topics.iter() {
             if room_name == topic_self {
-                println!("Found existing topic for {}", topic_self);
+                log!("Found existing topic for {}", topic_self);
                 return Some(room.clone());
             }
         }
         
         // Safety check - don't allow empty topic names
         if topic_self.is_empty() {
-            println!("Warning: Attempted to get topic with empty name");
+            log!("Warning: Attempted to get topic with empty name");
             return None;
         }
         
         // For safety, we could create the topic here but that would be a side effect
         // in a getter method, so we'll just log and return None
-        println!("Topic '{}' not found in known topics", topic_self);
+        log!("Topic '{}' not found in known topics", topic_self);
         None
     }
     fn join_room(&mut self, topic_str: &str) -> Result<(), Box<dyn Error>> {
@@ -65,7 +66,7 @@ impl GossipRooms for Gossip {
         }
         
         // Instead of panicking, return a default room
-        println!("Warning: Topic hash not found, using default room");
+        log!("Warning: Topic hash not found, using default room");
         Room::PublicRoom("general".to_string())
     }
     fn get_room_from_name(&self, topic: String) -> Room {
@@ -86,11 +87,11 @@ impl EventHandler for Gossip {
         
         // Process each new peer connection
         for (peer_id, _multiaddr) in list {
-            println!("Adding peer: {}", peer_id);
+            log!("Adding peer: {}", peer_id);
             
             // Avoid re-adding existing peers
             if self.peer_ids.contains(&peer_id) {
-                println!("Peer already known: {}", peer_id);
+                log!("Peer already known: {}", peer_id);
                 continue;
             }
             
@@ -122,7 +123,7 @@ impl EventHandler for Gossip {
         
         // Process each disconnected peer
         for (peer_id, _multiaddr) in list {
-            println!("Removing peer: {}", peer_id);
+            log!("Removing peer: {}", peer_id);
             
             // Remove from gossipsub
             self.swarm
@@ -144,11 +145,11 @@ impl EventHandler for Gossip {
         return Some(GossipEvent::Disconnection(peers));
     }
     fn message(&mut self, peer_id: PeerId, message: Message) -> Option<GossipEvent> {
-        println!("Received message from peer {} on topic {}", peer_id, message.topic);
+        log!("Received message from peer {} on topic {}", peer_id, message.topic);
         
         // Safety check for unexpected messages
         if message.data.is_empty() {
-            println!("Warning: Received empty message, ignoring");
+            log!("Warning: Received empty message, ignoring");
             return None;
         }
         
@@ -203,11 +204,11 @@ impl EventHandler for Gossip {
                 message,
             })) => self.message(peer_id, message),
             SwarmEvent::NewListenAddr { address, .. } => {
-                println!("Local node is listening on {address}");
+                log!("Local node is listening on {address}");
                 None
             }
             SwarmEvent::ExpiredListenAddr { address, .. } => {
-                println!("Local node is now not listening on {address}");
+                log!("Local node is now not listening on {address}");
                 None
             }
             _ => None,
