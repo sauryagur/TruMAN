@@ -81,3 +81,8 @@ impl FFIList {
         (self.ptr, self.sizes_ptr, self.size)
     }
 }
+impl Default for FFIList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
